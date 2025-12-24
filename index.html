@@ -1323,17 +1323,17 @@
                 <span data-i18n="格式刷">🖌️ 格式刷</span>
             </button>
             <button class="btn btn-info" id="labelingBtn" onclick="toggleLabelingMode()">
-                <span data-i18n="重新命名">🔤 重新命名</span>
+                <span data-i18n="重新排序">🔤 重新排序</span>
             </button>
             <div id="alignTools" style="display: none; margin-left: 10px; padding-left: 10px; border-left: 2px solid #dee2e6;">
-                <button class="btn btn-info btn-small" onclick="alignPanels('left')" title="左对齐">⬅️</button>
-                <button class="btn btn-info btn-small" onclick="alignPanels('right')" title="右对齐">➡️</button>
-                <button class="btn btn-info btn-small" onclick="alignPanels('top')" title="上对齐">⬆️</button>
-                <button class="btn btn-info btn-small" onclick="alignPanels('bottom')" title="下对齐">⬇️</button>
-                <button class="btn btn-info btn-small" onclick="alignPanels('centerH')" title="水平居中">↔️</button>
-                <button class="btn btn-info btn-small" onclick="alignPanels('centerV')" title="垂直居中">↕️</button>
-                <button class="btn btn-info btn-small" onclick="distributePanels('horizontal')" title="横向等距">⬌</button>
-                <button class="btn btn-info btn-small" onclick="distributePanels('vertical')" title="纵向等距">⬍</button>
+                <button class="btn btn-info btn-small" onclick="alignPanels('left')" data-title="左对齐" title="左对齐">⬅️</button>
+                <button class="btn btn-info btn-small" onclick="alignPanels('right')" data-title="右对齐" title="右对齐">➡️</button>
+                <button class="btn btn-info btn-small" onclick="alignPanels('top')" data-title="上对齐" title="上对齐">⬆️</button>
+                <button class="btn btn-info btn-small" onclick="alignPanels('bottom')" data-title="下对齐" title="下对齐">⬇️</button>
+                <button class="btn btn-info btn-small" onclick="alignPanels('centerH')" data-title="水平居中" title="水平居中">↔️</button>
+                <button class="btn btn-info btn-small" onclick="alignPanels('centerV')" data-title="垂直居中" title="垂直居中">↕️</button>
+                <button class="btn btn-info btn-small" onclick="distributePanels('horizontal')" data-title="横向等距" title="横向等距">⬌</button>
+                <button class="btn btn-info btn-small" onclick="distributePanels('vertical')" data-title="纵向等距" title="纵向等距">⬍</button>
             </div>
             <button class="btn btn-info" id="gridToggle" onclick="toggleShowGrid()">
                 <span data-i18n="📐 显示网格">📐 显示网格</span>
@@ -1347,11 +1347,11 @@
             <button class="btn btn-info" onclick="loadProject()">
                 <span data-i18n="加载">📂 加载</span>
             </button>
-            <button class="btn btn-info" onclick="exportToMarkdown()">
-                <span data-i18n="导出MD">📤 导出MD</span>
+            <button class="btn btn-info" onclick="showExportModal()">
+                <span data-i18n="导出">📤 导出</span>
             </button>
-            <button class="btn btn-info" onclick="exportToSVG()">
-                <span data-i18n="导出SVG">📤 导出SVG</span>
+            <button class="btn btn-danger" onclick="clearAllData()" title="清除所有数据">
+                <span data-i18n="清除数据">🗑️ 清除数据</span>
             </button>
             <input type="file" id="fileInput" style="display:none" accept=".json" onchange="handleFileLoad(event)">
         </div>
@@ -1470,32 +1470,33 @@
             <form id="figureForm">
                 <input type="hidden" id="editingFigureId" value="">
                 <div class="form-group">
-                    <label>Figure编号 *</label>
+                    <label data-i18n="Figure编号 *">Figure编号 *</label>
                     <input type="text" id="figureNumber" placeholder="例如: Figure 1" required>
                 </div>
                 <div class="form-group">
-                    <label>Figure标题 *</label>
+                    <label data-i18n="Figure标题 *">Figure标题 *</label>
                     <input type="text" id="figureTitle" placeholder="例如: 靶点验证与概念设计" required>
                 </div>
                 <div class="form-group">
-                    <label>Figure描述</label>
+                    <label data-i18n="Figure描述">Figure描述</label>
                     <textarea id="figureDescription" placeholder="描述这个Figure的整体内容..."></textarea>
                 </div>
                 <div class="form-group">
-                    <label>画布尺寸</label>
+                    <label data-i18n="画布尺寸">画布尺寸</label>
                     <div class="size-inputs">
-                        <input type="number" id="canvasWidth" value="800" placeholder="宽度" min="400" max="2000">
-                        <input type="number" id="canvasHeight" value="600" placeholder="高度" min="300" max="1500">
+                        <input type="number" id="canvasWidth" value="800" placeholder="宽度" min="400" max="4000">
+                        <input type="number" id="canvasHeight" value="600" placeholder="高度" min="300" max="3000">
                     </div>
+                    <small style="color: #999; font-size: 11px; margin-top: 4px; display: block;" data-i18n="支持 400-4000 × 300-3000 像素">支持 400-4000 × 300-3000 像素</small>
                 </div>
                 <div class="form-group" id="templateGroup">
-                    <label>布局模板</label>
+                    <label data-i18n="布局模板">布局模板</label>
                     <div class="template-selector">
                         <div class="template-option" onclick="selectTemplate('1x1')">1×1</div>
                         <div class="template-option" onclick="selectTemplate('1x2')">1×2</div>
                         <div class="template-option" onclick="selectTemplate('2x2')">2×2</div>
                         <div class="template-option" onclick="selectTemplate('2x3')">2×3</div>
-                        <div class="template-option selected" onclick="selectTemplate('custom')">自定义</div>
+                        <div class="template-option selected" onclick="selectTemplate('custom')" data-i18n="自定义">自定义</div>
                     </div>
                     <input type="hidden" id="selectedTemplate" value="custom">
                 </div>
@@ -1503,12 +1504,12 @@
                     <div class="modal-footer-left">
                         <button type="button" class="btn btn-danger" id="deleteFigureBtn" 
                                 onclick="deleteFigure()" style="display: none;">
-                            🗑️ 删除Figure
+                            <span data-i18n="🗑️ 删除Figure">🗑️ 删除Figure</span>
                         </button>
                     </div>
                     <div class="modal-footer-right">
-                        <button type="button" class="btn btn-primary" onclick="closeFigureModal()">取消</button>
-                        <button type="submit" class="btn btn-success" id="figureSubmitBtn">创建Figure</button>
+                        <button type="button" class="btn btn-primary" onclick="closeFigureModal()" data-i18n="取消">取消</button>
+                        <button type="submit" class="btn btn-success" id="figureSubmitBtn" data-i18n="创建Figure">创建Figure</button>
                     </div>
                 </div>
             </form>
@@ -1531,6 +1532,41 @@
         </div>
     </div>
 
+    <!-- 导出模态框 -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header" data-i18n="导出选项">导出选项</div>
+            <div style="padding: 20px;">
+                <div class="form-group">
+                    <label data-i18n="导出格式">导出格式</label>
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                        <button class="btn btn-info" onclick="exportProject()" style="justify-content: flex-start;">
+                            📁 <span data-i18n="项目文件 (JSON) - 完整项目备份">项目文件 (JSON) - 完整项目备份</span>
+                        </button>
+                        <button class="btn btn-info" onclick="exportToMarkdown(); closeExportModal();" style="justify-content: flex-start;">
+                            📝 <span data-i18n="Markdown报告 (MD)">Markdown报告 (MD)</span>
+                        </button>
+                        <button class="btn btn-info" onclick="exportToSVG(); closeExportModal();" style="justify-content: flex-start;">
+                            🎨 <span data-i18n="矢量图 (SVG) - 可无限缩放">矢量图 (SVG) - 可无限缩放</span>
+                        </button>
+                        <button class="btn btn-info" onclick="exportToPNG(); closeExportModal();" style="justify-content: flex-start;">
+                            🖼️ <span data-i18n="位图 (PNG) - 透明背景">位图 (PNG) - 透明背景</span>
+                        </button>
+                        <button class="btn btn-info" onclick="exportToJPG(); closeExportModal();" style="justify-content: flex-start;">
+                            📷 <span data-i18n="位图 (JPG) - 通用格式">位图 (JPG) - 通用格式</span>
+                        </button>
+                        <button class="btn btn-info" onclick="exportToPDF(); closeExportModal();" style="justify-content: flex-start;">
+                            📄 <span data-i18n="文档 (PDF) - 适合打印">文档 (PDF) - 适合打印</span>
+                        </button>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; text-align: right;">
+                    <button class="btn btn-primary" onclick="closeExportModal()" data-i18n="关闭">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // 初始化为空数组，不预设任何Figure
         let figures = [];
@@ -1541,6 +1577,10 @@
         let gridMode = false;
         let zoomLevel = 1;
         let isPresentationMode = false;
+
+        // 撤销功能
+        let undoHistory = [];
+        const MAX_UNDO_STEPS = 50;
 
         // 命名模式
         let isLabelingMode = false;
@@ -3461,13 +3501,14 @@
                 '切换语言 / Switch Language': '切换语言 / Switch Language',
                 '切换黑夜模式 / Toggle Dark Mode': '切换黑夜模式 / Toggle Dark Mode',
                 '联系作者 / Contact': '联系作者 / Contact',
+                '展示模式 / Presentation Mode': '展示模式 / Presentation Mode',
                 
                 // Toolbar
                 '新建Figure': '新建Figure',
                 '添加面板': '添加面板',
                 '复制面板': '复制面板',
                 '格式刷': '格式刷',
-                '重新命名': '重新命名',
+                '重新排序': '重新排序',
                 '显示网格': '显示网格',
                 '✅ 显示网格': '✅ 显示网格',
                 '📐 显示网格': '📐 显示网格',
@@ -3475,8 +3516,8 @@
                 '展示模式': '展示模式',
                 '保存': '保存',
                 '加载': '加载',
-                '导出MD': '导出MD',
-                '导出SVG': '导出SVG',
+                '导出': '导出',
+                '清除数据': '清除数据',
                 
                 // Stats bar
                 'Figures:': 'Figures:',
@@ -3484,7 +3525,7 @@
                 '当前:': '当前:',
                 '网格:': '网格:',
                 '缩放:': '缩放:',
-                '💡 Ctrl+滚轮缩放 | Shift+拖拽平移 | 方向键移动': '💡 Ctrl+滚轮缩放 | Shift+拖拽平移 | 方向键移动',
+                '💡 Ctrl+滚轮缩放 | Shift+拖拽平移 | 方向键移动': '💡 Ctrl+滚轮缩放 | Shift+拖拽平移 | 方向键移动 | Ctrl+Z撤销',
                 
                 // Figures list
                 '📁 Figures列表': '📁 Figures列表',
@@ -3506,18 +3547,46 @@
                 '需重做': '需重做',
                 '自定义颜色': '自定义颜色',
                 '面板类型': '面板类型',
-                '面板内容': '面板内容',
-                '上传图片': '上传图片',
-                '网格阵列模式': '网格阵列模式',
+                '选择类型': '选择类型',
+                '流式细胞术': '流式细胞术',
+                '免疫荧光': '免疫荧光',
+                '显微镜图像': '显微镜图像',
+                '统计图表': '统计图表',
+                '示意图': '示意图',
+                '面板图片': '面板图片',
+                '点击上传图片': '点击上传图片',
+                '更换图片': '更换图片',
+                '删除图片': '删除图片',
+                '使用矩阵阵列模式': '使用矩阵阵列模式（免疫荧光/流式）',
                 '行数': '行数',
                 '列数': '列数',
-                '显示行标题': '显示行标题',
-                '显示列标题': '显示列标题',
-                '应用': '应用',
-                '取消': '取消',
-                '关联文件夹路径': '关联文件夹路径',
+                '显示列标签': '显示列标签',
+                '显示行标签': '显示行标签',
+                '列标签': '列标签 (横向)',
+                '行标签': '行标签 (纵向)',
+                '列': '列',
+                '行': '行',
+                '如': '如',
                 '内容描述': '内容描述',
+                '此描述将显示在面板中...': '此描述将显示在面板中...',
                 '实验方法': '实验方法',
+                '记录实验方法和步骤...': '记录实验方法和步骤...',
+                '关联文件夹路径': '关联文件夹路径',
+                '选择文件夹': '选择文件夹',
+                '双击面板可打开关联的文件夹': '双击面板可打开关联的文件夹',
+                '打开文件夹': '打开文件夹',
+                '复制': '复制',
+                '删除': '删除',
+                
+                // Align tools
+                '左对齐': '左对齐',
+                '右对齐': '右对齐',
+                '上对齐': '上对齐',
+                '下对齐': '下对齐',
+                '水平居中': '水平居中',
+                '垂直居中': '垂直居中',
+                '横向等距': '横向等距',
+                '纵向等距': '纵向等距',
                 
                 // Modal
                 '创建新Figure': '创建新Figure',
@@ -3526,11 +3595,24 @@
                 'Figure标题 *': 'Figure标题 *',
                 'Figure描述': 'Figure描述',
                 '画布尺寸': '画布尺寸',
+                '支持 400-4000 × 300-3000 像素': '支持 400-4000 × 300-3000 像素',
                 '布局模板': '布局模板',
                 '自定义': '自定义',
                 '🗑️ 删除Figure': '🗑️ 删除Figure',
                 '创建Figure': '创建Figure',
                 '保存修改': '保存修改',
+                '取消': '取消',
+                '关闭': '关闭',
+                
+                // Export Modal
+                '导出选项': '导出选项',
+                '导出格式': '导出格式',
+                '项目文件 (JSON) - 完整项目备份': '项目文件 (JSON) - 完整项目备份',
+                'Markdown报告 (MD)': 'Markdown报告 (MD)',
+                '矢量图 (SVG) - 可无限缩放': '矢量图 (SVG) - 可无限缩放',
+                '位图 (PNG) - 透明背景': '位图 (PNG) - 透明背景',
+                '位图 (JPG) - 通用格式': '位图 (JPG) - 通用格式',
+                '文档 (PDF) - 适合打印': '文档 (PDF) - 适合打印',
                 
                 // Smart Layout
                 '智能排版预览': '智能排版预览',
@@ -3541,7 +3623,8 @@
                 '请创建或选择一个Figure': '请创建或选择一个Figure',
                 '确定要删除这个Figure及其所有面板吗？此操作不可恢复！': '确定要删除这个Figure及其所有面板吗？此操作不可恢复！',
                 '请先选择一个面板！': '请先选择一个面板！',
-                '当前Figure没有面板！': '当前Figure没有面板！'
+                '当前Figure没有面板！': '当前Figure没有面板！',
+                '请先选择一个Figure！': '请先选择一个Figure！'
             },
             en: {
                 // Header
@@ -3549,22 +3632,23 @@
                 '切换语言 / Switch Language': 'Switch Language / 切换语言',
                 '切换黑夜模式 / Toggle Dark Mode': 'Toggle Dark Mode / 切换黑夜模式',
                 '联系作者 / Contact': 'Contact / 联系作者',
+                '展示模式 / Presentation Mode': 'Presentation Mode / 展示模式',
                 
                 // Toolbar
                 '新建Figure': 'New Figure',
                 '添加面板': 'Add Panel',
-                '复制面板': 'Duplicate Panel',
+                '复制面板': 'Duplicate',
                 '格式刷': 'Format Painter',
-                '重新命名': 'Rename',
+                '重新排序': 'Reorder',
                 '显示网格': 'Show Grid',
                 '✅ 显示网格': '✅ Show Grid',
                 '📐 显示网格': '📐 Show Grid',
                 '智能排版': 'Smart Layout',
-                '展示模式': 'Presentation Mode',
+                '展示模式': 'Present',
                 '保存': 'Save',
                 '加载': 'Load',
-                '导出MD': 'Export MD',
-                '导出SVG': 'Export SVG',
+                '导出': 'Export',
+                '清除数据': 'Clear Data',
                 
                 // Stats bar
                 'Figures:': 'Figures:',
@@ -3572,7 +3656,7 @@
                 '当前:': 'Current:',
                 '网格:': 'Grid:',
                 '缩放:': 'Zoom:',
-                '💡 Ctrl+滚轮缩放 | Shift+拖拽平移 | 方向键移动': '💡 Ctrl+Wheel Zoom | Shift+Drag Pan | Arrow Keys Move',
+                '💡 Ctrl+滚轮缩放 | Shift+拖拽平移 | 方向键移动': '💡 Ctrl+Wheel Zoom | Shift+Drag Pan | Arrow Keys Move | Ctrl+Z Undo',
                 
                 // Figures list
                 '📁 Figures列表': '📁 Figures List',
@@ -3583,8 +3667,8 @@
                 // Properties panel
                 '⚙️ 面板属性': '⚙️ Panel Properties',
                 '网格大小': 'Grid Size',
-                '选择面板以编辑属性': 'Select a panel to edit properties',
-                '面板标签': 'Panel Label',
+                '选择面板以编辑属性': 'Select a panel to edit',
+                '面板标签': 'Label',
                 '位置 (px)': 'Position (px)',
                 '尺寸 (px)': 'Size (px)',
                 '进度状态': 'Status',
@@ -3594,31 +3678,72 @@
                 '需重做': 'Redo',
                 '自定义颜色': 'Custom Color',
                 '面板类型': 'Panel Type',
-                '面板内容': 'Panel Content',
-                '上传图片': 'Upload Image',
-                '网格阵列模式': 'Grid Array Mode',
+                '选择类型': 'Select Type',
+                '流式细胞术': 'Flow Cytometry',
+                '免疫荧光': 'Immunofluorescence',
+                '显微镜图像': 'Microscopy',
+                '统计图表': 'Statistics',
+                '示意图': 'Schematic',
+                '面板图片': 'Panel Image',
+                '点击上传图片': 'Click to upload',
+                '更换图片': 'Change',
+                '删除图片': 'Remove',
+                '使用矩阵阵列模式': 'Use Grid Array Mode (IF/Flow)',
                 '行数': 'Rows',
                 '列数': 'Columns',
-                '显示行标题': 'Show Row Labels',
-                '显示列标题': 'Show Column Labels',
-                '应用': 'Apply',
-                '取消': 'Cancel',
-                '关联文件夹路径': 'Associated Folder Path',
-                '内容描述': 'Content Description',
-                '实验方法': 'Experimental Method',
+                '显示列标签': 'Show Column Labels',
+                '显示行标签': 'Show Row Labels',
+                '列标签': 'Column Labels',
+                '行标签': 'Row Labels',
+                '列': 'Col',
+                '行': 'Row',
+                '如': 'e.g.',
+                '内容描述': 'Description',
+                '此描述将显示在面板中...': 'This will be displayed in panel...',
+                '实验方法': 'Method',
+                '记录实验方法和步骤...': 'Record methods and steps...',
+                '关联文件夹路径': 'Linked Folder',
+                '选择文件夹': 'Select Folder',
+                '双击面板可打开关联的文件夹': 'Double-click panel to open folder',
+                '打开文件夹': 'Open Folder',
+                '复制': 'Copy',
+                '删除': 'Delete',
+                
+                // Align tools
+                '左对齐': 'Align Left',
+                '右对齐': 'Align Right',
+                '上对齐': 'Align Top',
+                '下对齐': 'Align Bottom',
+                '水平居中': 'Center H',
+                '垂直居中': 'Center V',
+                '横向等距': 'Distribute H',
+                '纵向等距': 'Distribute V',
                 
                 // Modal
                 '创建新Figure': 'Create New Figure',
                 '编辑Figure信息': 'Edit Figure Info',
                 'Figure编号 *': 'Figure Number *',
                 'Figure标题 *': 'Figure Title *',
-                'Figure描述': 'Figure Description',
+                'Figure描述': 'Description',
                 '画布尺寸': 'Canvas Size',
+                '支持 400-4000 × 300-3000 像素': 'Supports 400-4000 × 300-3000 pixels',
                 '布局模板': 'Layout Template',
                 '自定义': 'Custom',
                 '🗑️ 删除Figure': '🗑️ Delete Figure',
-                '创建Figure': 'Create Figure',
-                '保存修改': 'Save Changes',
+                '创建Figure': 'Create',
+                '保存修改': 'Save',
+                '取消': 'Cancel',
+                '关闭': 'Close',
+                
+                // Export Modal
+                '导出选项': 'Export Options',
+                '导出格式': 'Export Format',
+                '项目文件 (JSON) - 完整项目备份': 'Project (JSON) - Full backup',
+                'Markdown报告 (MD)': 'Markdown Report (MD)',
+                '矢量图 (SVG) - 可无限缩放': 'Vector (SVG) - Scalable',
+                '位图 (PNG) - 透明背景': 'Image (PNG) - Transparent',
+                '位图 (JPG) - 通用格式': 'Image (JPG) - Universal',
+                '文档 (PDF) - 适合打印': 'Document (PDF) - For print',
                 
                 // Smart Layout
                 '智能排版预览': 'Smart Layout Preview',
@@ -3627,9 +3752,10 @@
                 // Messages
                 '已切换到中文': 'Switched to English',
                 '请创建或选择一个Figure': 'Please create or select a Figure',
-                '确定要删除这个Figure及其所有面板吗？此操作不可恢复！': 'Are you sure you want to delete this Figure and all its panels? This cannot be undone!',
+                '确定要删除这个Figure及其所有面板吗？此操作不可恢复！': 'Delete this Figure and all panels? This cannot be undone!',
                 '请先选择一个面板！': 'Please select a panel first!',
-                '当前Figure没有面板！': 'Current Figure has no panels!'
+                '当前Figure没有面板！': 'No panels in current Figure!',
+                '请先选择一个Figure！': 'Please select a Figure first!'
             }
         };
 
@@ -3649,6 +3775,12 @@
                 } else {
                     el.textContent = t(key);
                 }
+            });
+            
+            // 更新所有title属性
+            document.querySelectorAll('[data-title]').forEach(el => {
+                const key = el.getAttribute('data-title');
+                el.title = t(key);
             });
             
             // 重新渲染列表和画布以更新翻译
@@ -3690,13 +3822,13 @@
             const props = document.getElementById('panelProperties');
             props.innerHTML = `
                 <div class="form-group">
-                    <label>面板标签</label>
+                    <label>${t('面板标签')}</label>
                     <input type="text" value="${panel.label}" 
                            onchange="updatePanelProperty('label', this.value)">
                 </div>
 
                 <div class="form-group">
-                    <label>位置 (px)</label>
+                    <label>${t('位置 (px)')}</label>
                     <div class="position-inputs">
                         <input type="number" value="${panel.x}" step="1"
                                onchange="updatePanelProperty('x', parseInt(this.value))">
@@ -3706,7 +3838,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>尺寸 (px)</label>
+                    <label>${t('尺寸 (px)')}</label>
                     <div class="size-inputs">
                         <input type="number" value="${panel.width}" step="1" min="60"
                                onchange="updatePanelProperty('width', parseInt(this.value))">
@@ -3716,56 +3848,56 @@
                 </div>
 
                 <div class="form-group">
-                    <label>进度状态</label>
+                    <label>${t('进度状态')}</label>
                     <div class="color-presets">
                         <div class="color-preset pending ${panel.status === 'pending' ? 'selected' : ''}" 
                              onclick="updatePanelStatus('pending')">
-                            未开始
+                            ${t('未开始')}
                         </div>
                         <div class="color-preset progress ${panel.status === 'progress' ? 'selected' : ''}" 
                              onclick="updatePanelStatus('progress')">
-                            进行中
+                            ${t('进行中')}
                         </div>
                         <div class="color-preset complete ${panel.status === 'complete' ? 'selected' : ''}" 
                              onclick="updatePanelStatus('complete')">
-                            已完成
+                            ${t('已完成')}
                         </div>
                         <div class="color-preset redo ${panel.status === 'redo' ? 'selected' : ''}" 
                              onclick="updatePanelStatus('redo')">
-                            需重做
+                            ${t('需重做')}
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>自定义颜色</label>
+                    <label>${t('自定义颜色')}</label>
                     <input type="color" value="${panel.color || 'rgb(32, 85, 138)'}" 
                            onchange="updatePanelProperty('color', this.value)"
                            style="width: 100%; height: 40px; cursor: pointer;">
                 </div>
 
                 <div class="form-group">
-                    <label>面板类型</label>
+                    <label>${t('面板类型')}</label>
                     <select onchange="updatePanelProperty('type', this.value)">
-                        <option value="">选择类型</option>
+                        <option value="">${t('选择类型')}</option>
                         <option value="Western blot" ${panel.type === 'Western blot' ? 'selected' : ''}>Western blot</option>
-                        <option value="流式细胞术" ${panel.type === '流式细胞术' ? 'selected' : ''}>流式细胞术</option>
-                        <option value="免疫荧光" ${panel.type === '免疫荧光' ? 'selected' : ''}>免疫荧光</option>
+                        <option value="流式细胞术" ${panel.type === '流式细胞术' ? 'selected' : ''}>${t('流式细胞术')}</option>
+                        <option value="免疫荧光" ${panel.type === '免疫荧光' ? 'selected' : ''}>${t('免疫荧光')}</option>
                         <option value="qPCR" ${panel.type === 'qPCR' ? 'selected' : ''}>qPCR</option>
                         <option value="ELISA" ${panel.type === 'ELISA' ? 'selected' : ''}>ELISA</option>
-                        <option value="显微镜图像" ${panel.type === '显微镜图像' ? 'selected' : ''}>显微镜图像</option>
-                        <option value="统计图表" ${panel.type === '统计图表' ? 'selected' : ''}>统计图表</option>
-                        <option value="示意图" ${panel.type === '示意图' ? 'selected' : ''}>示意图</option>
+                        <option value="显微镜图像" ${panel.type === '显微镜图像' ? 'selected' : ''}>${t('显微镜图像')}</option>
+                        <option value="统计图表" ${panel.type === '统计图表' ? 'selected' : ''}>${t('统计图表')}</option>
+                        <option value="示意图" ${panel.type === '示意图' ? 'selected' : ''}>${t('示意图')}</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>面板图片</label>
+                    <label>${t('面板图片')}</label>
                     <div class="image-upload-area ${panel.image ? 'has-image' : ''}" 
                          onclick="document.getElementById('imageInput').click()">
                         ${panel.image ? 
                             `<img src="${panel.image}" class="image-preview">` : 
-                            '<div style="color: #999; font-size: 13px;">📷 点击上传图片</div>'}
+                            `<div style="color: #999; font-size: 13px;">📷 ${t('点击上传图片')}</div>`}
                     </div>
                     <input type="file" id="imageInput" style="display: none;" 
                            accept="image/*" onchange="handleImageUpload(event)">
@@ -3773,11 +3905,11 @@
                         <div class="image-actions">
                             <button class="btn btn-primary btn-small" 
                                     onclick="document.getElementById('imageInput').click()">
-                                更换图片
+                                ${t('更换图片')}
                             </button>
                             <button class="btn btn-primary btn-small" 
                                     onclick="removeImage()">
-                                删除图片
+                                ${t('删除图片')}
                             </button>
                         </div>
                     ` : ''}
@@ -3788,19 +3920,19 @@
                         <input type="checkbox" ${panel.gridMode ? 'checked' : ''} 
                                onchange="togglePanelGridMode(this.checked)" 
                                style="width: auto; margin-right: 8px;">
-                        使用矩阵阵列模式（免疫荧光/流式）
+                        ${t('使用矩阵阵列模式')}
                     </label>
                     
                     ${panel.gridMode ? `
                         <div class="grid-settings">
                             <div class="grid-dimension-inputs">
                                 <div>
-                                    <label style="font-size: 11px; margin-bottom: 4px;">行数</label>
+                                    <label style="font-size: 11px; margin-bottom: 4px;">${t('行数')}</label>
                                     <input type="number" value="${panel.gridRows || 3}" min="1" max="10"
                                            onchange="updateGridDimension('rows', parseInt(this.value))">
                                 </div>
                                 <div>
-                                    <label style="font-size: 11px; margin-bottom: 4px;">列数</label>
+                                    <label style="font-size: 11px; margin-bottom: 4px;">${t('列数')}</label>
                                     <input type="number" value="${panel.gridCols || 4}" min="1" max="10"
                                            onchange="updateGridDimension('cols', parseInt(this.value))">
                                 </div>
@@ -3811,27 +3943,27 @@
                                     <input type="checkbox" ${panel.showColLabels !== false ? 'checked' : ''} 
                                            onchange="updatePanelProperty('showColLabels', this.checked)"
                                            style="width: auto; margin-right: 5px;">
-                                    显示列标签
+                                    ${t('显示列标签')}
                                 </label>
                                 <label style="font-size: 12px;">
                                     <input type="checkbox" ${panel.showRowLabels !== false ? 'checked' : ''} 
                                            onchange="updatePanelProperty('showRowLabels', this.checked)"
                                            style="width: auto; margin-right: 5px;">
-                                    显示行标签
+                                    ${t('显示行标签')}
                                 </label>
                             </div>
                             
                             <div style="margin-top: 15px;">
                                 <label style="font-size: 12px; font-weight: bold; margin-bottom: 8px; display: block;">
-                                    列标签 (横向)
+                                    ${t('列标签')}
                                 </label>
                                 <div class="label-inputs">
                                     ${Array.from({length: panel.gridCols || 4}, (_, i) => `
                                         <div class="label-input-item">
-                                            <span>列 ${i+1}:</span>
+                                            <span>${t('列')} ${i+1}:</span>
                                             <input type="text" 
                                                    value="${(panel.colLabels || [])[i] || ''}"
-                                                   placeholder="如: DAPI"
+                                                   placeholder="${t('如')}: DAPI"
                                                    onchange="updateGridLabel('col', ${i}, this.value)">
                                         </div>
                                     `).join('')}
@@ -3840,15 +3972,15 @@
                             
                             <div style="margin-top: 15px;">
                                 <label style="font-size: 12px; font-weight: bold; margin-bottom: 8px; display: block;">
-                                    行标签 (纵向)
+                                    ${t('行标签')}
                                 </label>
                                 <div class="label-inputs">
                                     ${Array.from({length: panel.gridRows || 3}, (_, i) => `
                                         <div class="label-input-item">
-                                            <span>行 ${i+1}:</span>
+                                            <span>${t('行')} ${i+1}:</span>
                                             <input type="text" 
                                                    value="${(panel.rowLabels || [])[i] || ''}"
-                                                   placeholder="如: Free pCAR"
+                                                   placeholder="${t('如')}: Control"
                                                    onchange="updateGridLabel('row', ${i}, this.value)">
                                         </div>
                                     `).join('')}
@@ -3859,44 +3991,44 @@
                 </div>
 
                 <div class="form-group">
-                    <label>内容描述</label>
+                    <label>${t('内容描述')}</label>
                     <textarea onchange="updatePanelProperty('content', this.value)" 
-                              placeholder="此描述将显示在面板中...">${panel.content || ''}</textarea>
+                              placeholder="${t('此描述将显示在面板中...')}">${panel.content || ''}</textarea>
                 </div>
 
                 <div class="form-group">
-                    <label>实验方法</label>
+                    <label>${t('实验方法')}</label>
                     <textarea onchange="updatePanelProperty('method', this.value)"
-                              placeholder="记录实验方法和步骤...">${panel.method || ''}</textarea>
+                              placeholder="${t('记录实验方法和步骤...')}">${panel.method || ''}</textarea>
                 </div>
 
                 <div class="form-group">
-                    <label>📁 关联文件夹路径</label>
+                    <label>📁 ${t('关联文件夹路径')}</label>
                     <div style="display: flex; gap: 8px;">
                         <input type="text" value="${panel.folderPath || ''}" 
-                               placeholder="如: D:\\实验数据\\Figure1"
+                               placeholder="${t('如')}: D:\\实验数据\\Figure1"
                                onchange="updatePanelProperty('folderPath', this.value)"
                                style="flex: 1;">
                         <button class="btn btn-primary btn-small" 
                                 onclick="selectFolderPath()"
-                                title="选择文件夹">
+                                title="${t('选择文件夹')}">
                             📂
                         </button>
                     </div>
                     <small style="color: #999; font-size: 11px; margin-top: 4px; display: block;">
-                        双击面板可打开关联的文件夹
+                        ${t('双击面板可打开关联的文件夹')}
                     </small>
                     ${panel.folderPath ? `
                         <button class="btn btn-info btn-small" style="margin-top: 8px;"
                                 onclick="openFolderPath('${panel.folderPath.replace(/\\/g, '\\\\')}')">
-                            🔗 打开文件夹
+                            🔗 ${t('打开文件夹')}
                         </button>
                     ` : ''}
                 </div>
 
                 <div class="quick-actions">
-                    <button class="btn btn-primary btn-small" onclick="duplicatePanel()">📋 复制</button>
-                    <button class="btn btn-primary btn-small" onclick="deletePanel()">🗑️ 删除</button>
+                    <button class="btn btn-primary btn-small" onclick="duplicatePanel()">📋 ${t('复制')}</button>
+                    <button class="btn btn-danger btn-small" onclick="deletePanel()">🗑️ ${t('删除')}</button>
                 </div>
             `;
         }
@@ -4056,12 +4188,25 @@
         }
 
         function deletePanel() {
-            if (!confirm('确定要删除这个面板吗？')) return;
-
             const figure = figures.find(f => f.id === currentFigureId);
-            figure.panels = figure.panels.filter(p => p.id !== selectedPanelId);
+            if (!figure) return;
+            
+            // 支持批量删除
+            const panelsToDelete = selectedPanelIds.length > 0 ? selectedPanelIds : (selectedPanelId ? [selectedPanelId] : []);
+            
+            if (panelsToDelete.length === 0) return;
+            
+            const confirmMsg = panelsToDelete.length > 1 
+                ? (currentLanguage === 'zh' ? `确定要删除这 ${panelsToDelete.length} 个面板吗？` : `Delete ${panelsToDelete.length} panels?`)
+                : (currentLanguage === 'zh' ? '确定要删除这个面板吗？' : 'Delete this panel?');
+            
+            if (!confirm(confirmMsg)) return;
+
+            figure.panels = figure.panels.filter(p => !panelsToDelete.includes(p.id));
             
             selectedPanelId = null;
+            selectedPanelIds = [];
+            updateAlignToolsVisibility();
             saveToLocalStorage();
             renderCanvas();
             clearPanelProperties();
@@ -4070,7 +4215,8 @@
 
         function clearPanelProperties() {
             const props = document.getElementById('panelProperties');
-            props.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">选择面板以编辑属性</p>';
+            const msg = currentLanguage === 'zh' ? '选择面板以编辑属性' : 'Select a panel to edit properties';
+            props.innerHTML = `<p style="color: #999; text-align: center; padding: 20px;">${msg}</p>`;
         }
 
         function zoomIn() {
@@ -4187,7 +4333,80 @@
                 currentFigure ? currentFigure.number : '-';
         }
 
+        // 保存状态到撤销历史
+        function saveToUndoHistory() {
+            const state = JSON.stringify(figures);
+            // 避免重复保存相同状态
+            if (undoHistory.length > 0 && undoHistory[undoHistory.length - 1] === state) {
+                return;
+            }
+            undoHistory.push(state);
+            if (undoHistory.length > MAX_UNDO_STEPS) {
+                undoHistory.shift();
+            }
+        }
+
+        // 撤销操作
+        function undo() {
+            if (undoHistory.length <= 1) {
+                showNotification(currentLanguage === 'zh' ? '没有可撤销的操作' : 'Nothing to undo', 'warning');
+                return;
+            }
+            
+            // 移除当前状态
+            undoHistory.pop();
+            // 恢复上一个状态
+            const previousState = undoHistory[undoHistory.length - 1];
+            if (previousState) {
+                figures = JSON.parse(previousState);
+                localStorage.setItem('sciFiguresFinal', previousState);
+                
+                // 更新UI
+                renderFiguresList();
+                renderCanvas();
+                updateStats();
+                if (selectedPanelId) {
+                    const figure = figures.find(f => f.id === currentFigureId);
+                    if (figure && !figure.panels.find(p => p.id === selectedPanelId)) {
+                        selectedPanelId = null;
+                        selectedPanelIds = [];
+                        clearPanelProperties();
+                    }
+                }
+                
+                showNotification(currentLanguage === 'zh' ? '已撤销' : 'Undone', 'success');
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const colors = {
+                success: 'rgba(40, 167, 69, 0.95)',
+                warning: 'rgba(255, 193, 7, 0.95)',
+                error: 'rgba(220, 53, 69, 0.95)',
+                info: 'rgba(32, 85, 138, 0.95)'
+            };
+            
+            const hint = document.createElement('div');
+            hint.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 30px;
+                background: ${colors[type] || colors.info};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                font-size: 14px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            `;
+            hint.textContent = message;
+            document.body.appendChild(hint);
+            
+            setTimeout(() => hint.remove(), 2000);
+        }
+
         function saveToLocalStorage() {
+            saveToUndoHistory();
             localStorage.setItem('sciFiguresFinal', JSON.stringify(figures));
         }
 
@@ -4196,10 +4415,232 @@
             if (saved) {
                 try {
                     figures = JSON.parse(saved);
+                    // 初始化撤销历史
+                    undoHistory = [saved];
                 } catch(e) {
                     figures = [];
                 }
             }
+        }
+
+        // 清除所有数据
+        function clearAllData() {
+            const confirmMsg = currentLanguage === 'zh' 
+                ? '确定要清除所有数据吗？此操作不可恢复！\n\n这将删除所有Figure和面板。'
+                : 'Are you sure you want to clear all data? This cannot be undone!\n\nThis will delete all Figures and panels.';
+            
+            if (confirm(confirmMsg)) {
+                figures = [];
+                currentFigureId = null;
+                selectedPanelId = null;
+                selectedPanelIds = [];
+                undoHistory = [];
+                
+                localStorage.removeItem('sciFiguresFinal');
+                
+                renderFiguresList();
+                renderCanvas();
+                updateStats();
+                clearPanelProperties();
+                
+                showNotification(currentLanguage === 'zh' ? '所有数据已清除' : 'All data cleared', 'success');
+            }
+        }
+
+        // 导出模态框
+        function showExportModal() {
+            document.getElementById('exportModal').classList.add('active');
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('active');
+        }
+
+        function exportProject() {
+            saveProject();
+            closeExportModal();
+        }
+
+        // 导出为PNG
+        function exportToPNG() {
+            exportToImage('png');
+        }
+
+        // 导出为JPG
+        function exportToJPG() {
+            exportToImage('jpeg');
+        }
+
+        // 导出为图片（PNG/JPG）
+        function exportToImage(format) {
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (!figure) {
+                alert(currentLanguage === 'zh' ? '请先选择一个Figure！' : 'Please select a Figure first!');
+                return;
+            }
+
+            // 创建canvas元素
+            const canvas = document.createElement('canvas');
+            canvas.width = figure.canvasWidth;
+            canvas.height = figure.canvasHeight;
+            const ctx = canvas.getContext('2d');
+
+            // 设置背景
+            if (format === 'jpeg') {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            const statusColors = {
+                pending: '#e74c3c',
+                progress: '#f39c12',
+                complete: '#27ae60',
+                redo: '#9b59b6'
+            };
+
+            // 绘制面板
+            figure.panels.forEach(panel => {
+                const borderColor = statusColors[panel.status] || panel.color;
+                
+                // 绘制面板背景
+                ctx.fillStyle = 'white';
+                ctx.fillRect(panel.x, panel.y, panel.width, panel.height);
+                
+                // 绘制边框
+                ctx.strokeStyle = borderColor;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(panel.x, panel.y, panel.width, panel.height);
+                
+                // 绘制标签背景
+                ctx.fillStyle = borderColor;
+                ctx.fillRect(panel.x, panel.y, panel.width, 30);
+                
+                // 绘制标签文字
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText(panel.label, panel.x + 10, panel.y + 20);
+                
+                // 绘制内容
+                if (panel.content) {
+                    ctx.fillStyle = '#666';
+                    ctx.font = '12px Arial';
+                    const lines = panel.content.split('\n');
+                    lines.forEach((line, i) => {
+                        if (i < 3) {
+                            ctx.fillText(line.substring(0, 40), panel.x + 10, panel.y + 50 + i * 16);
+                        }
+                    });
+                }
+            });
+
+            // 下载图片
+            const link = document.createElement('a');
+            const fileName = figure.title ? figure.title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_') : figure.number.replace(/\s+/g, '_');
+            link.download = `${fileName}_${new Date().toISOString().split('T')[0]}.${format === 'jpeg' ? 'jpg' : 'png'}`;
+            link.href = canvas.toDataURL(`image/${format}`, 0.95);
+            link.click();
+        }
+
+        // 导出为PDF
+        function exportToPDF() {
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (!figure) {
+                alert(currentLanguage === 'zh' ? '请先选择一个Figure！' : 'Please select a Figure first!');
+                return;
+            }
+
+            // 创建SVG内容
+            const svgContent = generateSVGContent(figure);
+            
+            // 创建一个包含SVG的HTML页面用于打印
+            const printWindow = window.open('', '_blank');
+            const fileName = figure.title ? figure.title : figure.number;
+            
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${fileName}</title>
+                    <style>
+                        @page { 
+                            size: ${figure.canvasWidth}px ${figure.canvasHeight}px;
+                            margin: 0;
+                        }
+                        body { 
+                            margin: 0; 
+                            padding: 20px;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                        }
+                        svg {
+                            max-width: 100%;
+                            height: auto;
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${svgContent}
+                    <script>
+                        window.onload = function() {
+                            setTimeout(function() {
+                                window.print();
+                            }, 500);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        function generateSVGContent(figure) {
+            const statusColors = {
+                pending: '#e74c3c',
+                progress: '#f39c12',
+                complete: '#27ae60',
+                redo: '#9b59b6'
+            };
+
+            let svg = `<svg width="${figure.canvasWidth}" height="${figure.canvasHeight}" 
+     xmlns="http://www.w3.org/2000/svg">
+    <rect width="${figure.canvasWidth}" height="${figure.canvasHeight}" fill="white"/>
+`;
+
+            figure.panels.forEach(panel => {
+                const borderColor = statusColors[panel.status] || panel.color;
+                
+                svg += `    <g>
+        <rect x="${panel.x}" y="${panel.y}" width="${panel.width}" height="${panel.height}" 
+              fill="white" stroke="${borderColor}" stroke-width="2" rx="4"/>
+        <rect x="${panel.x}" y="${panel.y}" width="${panel.width}" height="30" 
+              fill="${borderColor}" rx="4"/>
+        <text x="${panel.x + 10}" y="${panel.y + 20}" 
+              font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+            ${panel.label}
+        </text>
+`;
+
+                if (panel.content) {
+                    const lines = panel.content.split('\n');
+                    lines.forEach((line, i) => {
+                        if (i < 3) {
+                            svg += `        <text x="${panel.x + 10}" y="${panel.y + 50 + i * 16}" 
+              font-family="Arial, sans-serif" font-size="12" fill="#666">
+            ${escapeXml(line.substring(0, 40))}
+        </text>
+`;
+                        }
+                    });
+                }
+
+                svg += `    </g>
+`;
+            });
+
+            svg += `</svg>`;
+            return svg;
         }
 
         function saveProject() {
@@ -4520,9 +4961,20 @@
                         exitPresentationMode();
                     }
                 }
-                if (e.key === 'Delete' && selectedPanelId && !isPresentationMode && !isLabelingMode) {
-                    deletePanel();
+                
+                // Ctrl+Z 撤销
+                if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !isLabelingMode) {
+                    e.preventDefault();
+                    undo();
                 }
+                
+                // Delete 删除面板（支持多选）
+                if (e.key === 'Delete' && !isPresentationMode && !isLabelingMode) {
+                    if (selectedPanelIds.length > 0 || selectedPanelId) {
+                        deletePanel();
+                    }
+                }
+                
                 if (e.key === 'g' && e.ctrlKey && !isLabelingMode) {
                     e.preventDefault();
                     toggleShowGrid();
