@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  在线体验：<a href="https://你的用户名.github.io/sci-figure-planner/">https://你的用户名.github.io/sci-figure-planner/</a>
+  在线体验：<a href="https://coolcoldplay.github.io/sci-figure-planner/">https://coolcoldplay.github.io/sci-figure-planner/</a>
 </p>
 
 ---
@@ -160,12 +160,6 @@ sci-figure-planner/
 
 ---
 
-## 📄 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
-
----
-
 ## 🙏 致谢
 
 感谢所有为科研事业努力的研究者们！
@@ -177,23 +171,9 @@ sci-figure-planner/
 
 ---
 
-## 📸 截图预览
-
-### 主界面
-*（可以添加你的截图）*
-
-### 展示模式
-*（可以添加你的截图）*
-
-### 智能排版
-*（可以添加你的截图）*
-
----
-
 ## 📞 联系作者
 
-- 📧 Email: 你的邮箱@example.com
-- 🐙 GitHub: [@你的用户名](https://github.com/你的用户名)
+- 📧 Email: 1356496415@qq.com
 
 ---
 
