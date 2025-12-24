@@ -1,0 +1,4555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCI拼图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-canvas: #2c3e50;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --text-tertiary: #999;
+            --border-color: #e9ecef;
+            --border-color-secondary: #dee2e6;
+        }
+
+        body.dark-mode {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-canvas: #0a0a0a;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --text-tertiary: #808080;
+            --border-color: #404040;
+            --border-color-secondary: #505050;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: rgb(32, 85, 138);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        .container.presentation-mode {
+            background: #fff;
+        }
+
+        .header {
+            background: rgb(32, 85, 138);
+            color: white;
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s;
+        }
+
+        .presentation-mode .header {
+            display: none;
+        }
+
+        .header h1 {
+            font-size: 1.3em;
+            margin: 0;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-icon {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .header-icon:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .toolbar {
+            background: var(--bg-secondary);
+            padding: 8px 20px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .presentation-mode .toolbar {
+            display: none;
+        }
+
+        .btn {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: rgb(32, 85, 138);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: rgb(25, 68, 110);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn.active {
+            background: #28a745;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3);
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr 380px;
+            gap: 0;
+            flex: 1;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .presentation-mode .main-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .figures-list {
+            background: var(--bg-secondary);
+            border-right: 2px solid var(--border-color);
+            overflow-y: auto;
+            transition: all 0.3s;
+        }
+
+        .presentation-mode .figures-list {
+            display: none;
+        }
+
+        .figures-list h3 {
+            padding: 15px;
+            background: var(--bg-primary);
+            border-bottom: 2px solid var(--border-color);
+            color: rgb(32, 85, 138);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .figure-list-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: move;
+            transition: all 0.2s;
+            position: relative;
+            color: var(--text-primary);
+        }
+
+        .figure-list-item:hover {
+            background: var(--bg-primary);
+        }
+
+        .figure-list-item.active {
+            background: rgb(32, 85, 138);
+            color: white;
+        }
+
+        .figure-list-item.dragging {
+            opacity: 0.5;
+        }
+
+        .figure-list-item.drag-over {
+            border-top: 3px solid rgb(32, 85, 138);
+        }
+
+        .figure-edit-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            opacity: 0;
+            transition: all 0.2s;
+        }
+
+        .figure-list-item:hover .figure-edit-btn {
+            opacity: 1;
+        }
+
+        .figure-list-item.active .figure-edit-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: rgb(32, 85, 138);
+            border-color: white;
+        }
+
+        .canvas-workspace {
+            background: var(--bg-canvas);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+        }
+
+        .canvas-workspace.panning {
+            cursor: grabbing;
+        }
+
+        .presentation-mode .canvas-workspace {
+            background: #fff;
+        }
+
+        .canvas-container {
+            position: relative;
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+        }
+
+        .figure-canvas {
+            background: #fff;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            user-select: none;
+        }
+
+        .presentation-mode .figure-canvas {
+            box-shadow: none;
+            border: 2px solid #333;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .grid-overlay.visible {
+            opacity: 1;
+        }
+
+        .presentation-mode .grid-overlay {
+            display: none;
+        }
+
+        .drag-preview {
+            position: absolute;
+            border: 2px dashed #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        .drag-preview.active {
+            display: block;
+        }
+
+        .panel-item {
+            position: absolute;
+            background: white;
+            border: 2px solid rgb(32, 85, 138);
+            transition: box-shadow 0.15s, border-color 0.15s;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            z-index: 2;
+        }
+
+        .panel-item:hover {
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+            z-index: 3;
+        }
+
+        .panel-item.selected {
+            border-color: #ffc107;
+            border-width: 3px;
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.3);
+            z-index: 4;
+        }
+
+        .panel-item.multi-selected {
+            border-color: #28a745;
+            border-width: 4px;
+            box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.4), 0 4px 16px rgba(40, 167, 69, 0.3);
+            z-index: 4;
+        }
+
+        .panel-item.dragging {
+            opacity: 0.5;
+            z-index: 5;
+        }
+
+        .panel-header {
+            color: white;
+            padding: 8px 12px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: grab;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .panel-header:active {
+            cursor: grabbing;
+        }
+
+        .panel-body {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-image-wrapper {
+            flex: 1;
+            min-height: 0;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .panel-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .panel-description {
+            flex-shrink: 0;
+            padding: 10px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            font-size: 12px;
+            color: #666;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .panel-content-full {
+            flex: 1;
+            padding: 12px;
+            font-size: 12px;
+            color: #666;
+            overflow-y: auto;
+        }
+
+        .presentation-mode .panel-item {
+            background: white;
+            border-width: 2px;
+            cursor: default;
+            box-shadow: none !important;
+        }
+
+        .presentation-mode .panel-item.pending {
+            border-color: #e74c3c;
+        }
+
+        .presentation-mode .panel-item.progress {
+            border-color: #f39c12;
+        }
+
+        .presentation-mode .panel-item.complete {
+            border-color: #27ae60;
+        }
+
+        .presentation-mode .panel-item.redo {
+            border-color: #9b59b6;
+        }
+
+        .presentation-mode .panel-header {
+            display: none;
+        }
+
+        .presentation-mode .panel-body {
+            padding: 0;
+        }
+
+        .panel-presentation-label {
+            display: none;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            padding: 2px 6px;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 10;
+            color: #333;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .presentation-mode .panel-presentation-label {
+            display: block;
+        }
+
+        .presentation-mode .panel-image-wrapper {
+            background: white;
+        }
+
+        .presentation-mode .panel-description {
+            display: none;
+        }
+
+        .presentation-mode .panel-content-full {
+            padding: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .resize-handles {
+            position: absolute;
+            inset: -6px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .presentation-mode .resize-handles {
+            display: none;
+        }
+
+        .alignment-guide {
+            position: absolute;
+            background: #e74c3c;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.8;
+        }
+
+        .alignment-guide.vertical {
+            width: 2px;
+            height: 100%;
+            top: 0;
+        }
+
+        .alignment-guide.horizontal {
+            height: 2px;
+            width: 100%;
+            left: 0;
+        }
+
+        .resize-preview {
+            position: absolute;
+            border: 2px dashed #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .selection-box {
+            position: absolute;
+            border: 2px dashed rgb(32, 85, 138);
+            background: rgba(32, 85, 138, 0.1);
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        .selection-box.active {
+            display: block;
+        }
+
+        .btn.format-painter-active {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .resize-handle {
+            position: absolute;
+            background: rgb(32, 85, 138);
+            border: 2px solid white;
+            pointer-events: auto;
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+        }
+
+        .panel-item:hover .resize-handle.n,
+        .panel-item:hover .resize-handle.s,
+        .panel-item:hover .resize-handle.e,
+        .panel-item:hover .resize-handle.w {
+            opacity: 1;
+        }
+
+        .resize-handle:hover {
+            background: rgb(25, 68, 110);
+        }
+
+        .resize-handle.n,
+        .resize-handle.s {
+            width: 60px;
+            height: 8px;
+            cursor: ns-resize;
+        }
+
+        .resize-handle.w,
+        .resize-handle.e {
+            width: 8px;
+            height: 60px;
+            cursor: ew-resize;
+        }
+
+        .resize-handle.n {
+            top: 0;
+            left: 50%;
+            transform: translate(-50%, 0);
+        }
+
+        .resize-handle.s {
+            bottom: 0;
+            left: 50%;
+            transform: translate(-50%, 0);
+        }
+
+        .resize-handle.w {
+            left: 0;
+            top: 50%;
+            transform: translate(0, -50%);
+        }
+
+        .resize-handle.e {
+            right: 0;
+            top: 50%;
+            transform: translate(0, -50%);
+        }
+
+        .resize-handle.nw,
+        .resize-handle.ne,
+        .resize-handle.sw,
+        .resize-handle.se {
+            display: none;
+        }
+
+        .properties-panel {
+            background: var(--bg-secondary);
+            border-left: 2px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+            transition: all 0.3s;
+        }
+
+        .presentation-mode .properties-panel {
+            display: none;
+        }
+
+        .properties-panel h3 {
+            color: rgb(32, 85, 138);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgb(32, 85, 138);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            transition: border-color 0.3s;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: rgb(32, 85, 138);
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .grid-size-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .grid-size-control input[type="range"] {
+            flex: 1;
+        }
+
+        .grid-size-value {
+            font-weight: bold;
+            color: rgb(32, 85, 138);
+            min-width: 50px;
+        }
+
+        .color-presets {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .color-preset {
+            height: 60px;
+            border: 3px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .color-preset:hover {
+            transform: scale(1.05);
+        }
+
+        .color-preset.selected {
+            border-color: #ffc107;
+        }
+
+        .color-preset.pending {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .color-preset.progress {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+
+        .color-preset.complete {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        }
+
+        .color-preset.redo {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+        }
+
+        .image-upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .image-upload-area:hover {
+            border-color: rgb(32, 85, 138);
+            background: #f8f9fa;
+        }
+
+        .image-upload-area.has-image {
+            padding: 0;
+            border: none;
+        }
+
+        .image-preview {
+            width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 6px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 1.8em;
+            color: rgb(32, 85, 138);
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 15px;
+        }
+
+        .stats-bar {
+            background: var(--bg-primary);
+            padding: 12px 20px;
+            display: flex;
+            gap: 25px;
+            border-bottom: 2px solid var(--border-color);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .presentation-mode .stats-bar {
+            display: none;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: rgb(32, 85, 138);
+            font-size: 15px;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+            background: var(--bg-primary);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+        }
+
+        .zoom-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: rgb(32, 85, 138);
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .zoom-btn:hover {
+            background: rgb(32, 85, 138);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .zoom-level {
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+            font-weight: bold;
+            padding: 2px 0;
+        }
+
+        .presentation-controls {
+            display: none;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        .presentation-mode .presentation-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .presentation-nav {
+            display: none;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+        }
+
+        .presentation-mode .presentation-nav {
+            display: flex;
+        }
+
+        .presentation-nav.nav-left {
+            left: 20px;
+        }
+
+        .presentation-nav.nav-right {
+            right: 20px;
+        }
+
+        .presentation-nav-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(32, 85, 138, 0.9);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .presentation-nav-btn:hover {
+            background: rgb(32, 85, 138);
+            transform: scale(1.1);
+        }
+
+        .presentation-nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .presentation-info {
+            display: none;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .presentation-mode .presentation-info {
+            display: block;
+        }
+
+        .presentation-info h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            color: rgb(32, 85, 138);
+        }
+
+        .presentation-info p {
+            margin: 0;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .exit-presentation {
+            padding: 12px 24px;
+            background: rgb(32, 85, 138);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+            transition: all 0.2s;
+            box-shadow: 0 2px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .exit-presentation:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5);
+        }
+
+        .size-inputs,
+        .position-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .template-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .template-option {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .template-option:hover {
+            border-color: rgb(32, 85, 138);
+            background: #f8f9fa;
+        }
+
+        .template-option.selected {
+            border-color: rgb(32, 85, 138);
+            background: #e7eaf6;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #999;
+            font-size: 16px;
+        }
+
+        .image-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .panel-grid-container {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            padding: 8px;
+        }
+
+        .panel-grid-table {
+            width: 100%;
+            height: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        .panel-grid-table th {
+            background: transparent;
+            color: #333;
+            padding: 4px 6px;
+            font-weight: bold;
+            border: 1px solid #dee2e6;
+            text-align: center;
+            font-size: 10px;
+        }
+
+        .panel-grid-table td {
+            border: 1px solid #dee2e6;
+            padding: 4px;
+            text-align: center;
+            background: white;
+        }
+
+        .panel-grid-table .grid-row-label {
+            background: transparent;
+            font-weight: bold;
+            color: #333;
+            font-size: 10px;
+        }
+
+        .panel-grid-table .grid-cell {
+            background: #f8f9fa;
+            min-width: 40px;
+            min-height: 30px;
+        }
+
+        .presentation-mode .panel-grid-table th {
+            font-size: 12px;
+            padding: 6px 8px;
+        }
+
+        .presentation-mode .panel-grid-table .grid-row-label {
+            font-size: 12px;
+            padding: 6px 8px;
+        }
+
+        .presentation-mode .panel-grid-table .grid-cell {
+            min-width: 60px;
+            min-height: 50px;
+        }
+
+        .presentation-mode .panel-grid-container {
+            padding: 12px;
+        }
+
+        .grid-settings {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .grid-dimension-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .label-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .label-input-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .label-input-item input {
+            flex: 1;
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+
+        .label-input-item span {
+            font-size: 11px;
+            color: #666;
+            min-width: 60px;
+        }
+
+        .panel-tooltip {
+            display: none;
+            position: fixed;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            max-width: 300px;
+            z-index: 10000;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .panel-tooltip.active {
+            display: block;
+        }
+
+        .presentation-mode .panel-item {
+            cursor: help;
+        }
+
+        /* 命名模式样式 */
+        .labeling-mode .panel-item {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .labeling-mode .panel-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .labeling-mode .panel-item.labeled {
+            opacity: 0.6;
+            border-color: #28a745;
+        }
+
+        .labeling-sequence-display {
+            position: fixed;
+            top: 120px;
+            right: 30px;
+            background: rgba(102, 126, 234, 0.95);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 10000;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            min-width: 280px;
+            max-width: 350px;
+        }
+
+        .labeling-sequence-display .sequence {
+            font-size: 24px;
+            margin: 15px 0;
+            letter-spacing: 8px;
+            font-family: monospace;
+        }
+
+        .labeling-sequence-display .hint {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .labeling-sequence-display .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn-labeling {
+            padding: 10px 20px;
+            background: white;
+            color: rgb(32, 85, 138);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-labeling:hover {
+            background: #f0f0f0;
+            transform: translateY(-1px);
+        }
+
+        .btn-labeling.danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-labeling.danger:hover {
+            background: #c82333;
+        }
+
+        .contact-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 10001;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .contact-modal.active {
+            display: flex;
+        }
+
+        .contact-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .contact-content h3 {
+            color: rgb(32, 85, 138);
+            margin-bottom: 20px;
+        }
+
+        .contact-email {
+            font-size: 18px;
+            color: #333;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+
+        .contact-close {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: rgb(32, 85, 138);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .contact-close:hover {
+            background: #5568d3;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .modal-footer-left {
+            flex: 1;
+        }
+
+        .modal-footer-right {
+            display: flex;
+            gap: 10px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 250px 1fr;
+            }
+            
+            .properties-panel {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="appContainer">
+        <div class="header">
+            <h1>🔬 SCI拼图</h1>
+            <div class="header-right">
+                <button class="header-icon" id="presentationBtn" onclick="enterPresentationMode()" title="展示模式 / Presentation Mode">
+                    🎬
+                </button>
+                <button class="header-icon" onclick="toggleLanguage()" title="切换语言 / Switch Language">
+                    🌐
+                </button>
+                <button class="header-icon" id="darkModeToggle" onclick="toggleDarkMode()" title="切换黑夜模式 / Toggle Dark Mode">
+                    🌙
+                </button>
+                <button class="header-icon" onclick="showContact()" title="联系作者 / Contact">
+                    ✉️
+                </button>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn btn-primary" onclick="createNewFigure()">
+                <span data-i18n="新建Figure">➕ 新建Figure</span>
+            </button>
+            <button class="btn btn-primary" onclick="addPanel()">
+                <span data-i18n="添加面板">➕ 添加面板</span>
+            </button>
+            <button class="btn btn-info" onclick="duplicatePanel()">
+                <span data-i18n="复制面板">📋 复制面板</span>
+            </button>
+            <button class="btn btn-info" id="formatPainter" onclick="toggleFormatPainter()">
+                <span data-i18n="格式刷">🖌️ 格式刷</span>
+            </button>
+            <button class="btn btn-info" id="labelingBtn" onclick="toggleLabelingMode()">
+                <span data-i18n="重新命名">🔤 重新命名</span>
+            </button>
+            <div id="alignTools" style="display: none; margin-left: 10px; padding-left: 10px; border-left: 2px solid #dee2e6;">
+                <button class="btn btn-info btn-small" onclick="alignPanels('left')" title="左对齐">⬅️</button>
+                <button class="btn btn-info btn-small" onclick="alignPanels('right')" title="右对齐">➡️</button>
+                <button class="btn btn-info btn-small" onclick="alignPanels('top')" title="上对齐">⬆️</button>
+                <button class="btn btn-info btn-small" onclick="alignPanels('bottom')" title="下对齐">⬇️</button>
+                <button class="btn btn-info btn-small" onclick="alignPanels('centerH')" title="水平居中">↔️</button>
+                <button class="btn btn-info btn-small" onclick="alignPanels('centerV')" title="垂直居中">↕️</button>
+                <button class="btn btn-info btn-small" onclick="distributePanels('horizontal')" title="横向等距">⬌</button>
+                <button class="btn btn-info btn-small" onclick="distributePanels('vertical')" title="纵向等距">⬍</button>
+            </div>
+            <button class="btn btn-info" id="gridToggle" onclick="toggleShowGrid()">
+                <span data-i18n="📐 显示网格">📐 显示网格</span>
+            </button>
+            <button class="btn btn-info" onclick="smartLayout()">
+                <span data-i18n="智能排版">✨ 智能排版</span>
+            </button>
+            <button class="btn btn-success" onclick="saveProject()">
+                <span data-i18n="保存">💾 保存</span>
+            </button>
+            <button class="btn btn-info" onclick="loadProject()">
+                <span data-i18n="加载">📂 加载</span>
+            </button>
+            <button class="btn btn-info" onclick="exportToMarkdown()">
+                <span data-i18n="导出MD">📤 导出MD</span>
+            </button>
+            <button class="btn btn-info" onclick="exportToSVG()">
+                <span data-i18n="导出SVG">📤 导出SVG</span>
+            </button>
+            <input type="file" id="fileInput" style="display:none" accept=".json" onchange="handleFileLoad(event)">
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-label" data-i18n="Figures:">Figures:</span>
+                <span class="stat-value" id="totalFigures">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label" data-i18n="面板:">面板:</span>
+                <span class="stat-value" id="totalPanels">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label" data-i18n="当前:">当前:</span>
+                <span class="stat-value" id="currentFigureName">-</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label" data-i18n="网格:">网格:</span>
+                <span class="stat-value" id="gridSizeDisplay">20px</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label" data-i18n="缩放:">缩放:</span>
+                <span class="stat-value" id="zoomDisplay">100%</span>
+            </div>
+            <div class="stat-item" style="margin-left: auto; font-size: 11px; color: #999;">
+                <span data-i18n="💡 Ctrl+滚轮缩放 | Shift+拖拽平移 | 方向键移动">💡 Ctrl+滚轮缩放 | Shift+拖拽平移 | 方向键移动</span>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="figures-list">
+                <h3 data-i18n="📁 Figures列表">📁 Figures列表</h3>
+                <div id="figuresList"></div>
+            </div>
+
+            <div class="canvas-workspace" id="workspace">
+                <div class="canvas-container" id="canvasContainer">
+                    <div id="figureCanvas" class="figure-canvas">
+                        <canvas class="grid-overlay" id="gridCanvas"></canvas>
+                        <div class="drag-preview" id="dragPreview"></div>
+                        <div class="selection-box" id="selectionBox"></div>
+                        <div class="loading">请创建或选择一个Figure</div>
+                    </div>
+                </div>
+
+                <div class="zoom-controls">
+                    <button class="zoom-btn" onclick="zoomIn()">+</button>
+                    <div class="zoom-level" id="zoomLevel">100%</div>
+                    <button class="zoom-btn" onclick="zoomOut()">−</button>
+                    <button class="zoom-btn" onclick="resetZoom()">⊙</button>
+                </div>
+
+                <div class="presentation-info" id="presentationInfo">
+                    <h3 id="presentationTitle">Figure 1</h3>
+                    <p id="presentationSubtitle">Title</p>
+                </div>
+
+                <div class="presentation-nav nav-left">
+                    <button class="presentation-nav-btn" id="prevFigureBtn" onclick="prevFigure()">
+                        ◀
+                    </button>
+                </div>
+
+                <div class="presentation-nav nav-right">
+                    <button class="presentation-nav-btn" id="nextFigureBtn" onclick="nextFigure()">
+                        ▶
+                    </button>
+                </div>
+
+                <div class="presentation-controls">
+                    <button class="exit-presentation" onclick="exitPresentationMode()">
+                        ✕ 退出展示模式
+                    </button>
+                </div>
+            </div>
+
+            <div class="properties-panel">
+                <h3 data-i18n="⚙️ 面板属性">⚙️ 面板属性</h3>
+                
+                <div class="form-group">
+                    <label data-i18n="网格大小">网格大小</label>
+                    <div class="grid-size-control">
+                        <input type="range" id="gridSizeSlider" min="5" max="50" value="20" 
+                               oninput="updateGridSize(this.value)"
+                               onchange="finalizeGridSize()">
+                        <span class="grid-size-value" id="gridSizeValue">20px</span>
+                    </div>
+                </div>
+
+                <div id="panelProperties">
+                    <p style="color: #999; text-align: center; padding: 20px;" data-i18n="选择面板以编辑属性">
+                        选择面板以编辑属性
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel-tooltip" id="panelTooltip"></div>
+
+    <div class="labeling-sequence-display" id="labelingDisplay" style="display: none;">
+        <div style="font-size: 14px;">🔤 命名模式</div>
+        <div class="sequence" id="labelingSequence"></div>
+        <div class="hint">点击面板排序</div>
+        <div class="actions">
+            <button class="btn-labeling" onclick="finishLabeling()">✓ 完成</button>
+            <button class="btn-labeling danger" onclick="cancelLabeling()">✕ 取消</button>
+        </div>
+    </div>
+
+    <!-- Figure编辑模态框 -->
+    <div class="modal" id="figureModal">
+        <div class="modal-content">
+            <div class="modal-header" id="figureModalTitle">创建新Figure</div>
+            <form id="figureForm">
+                <input type="hidden" id="editingFigureId" value="">
+                <div class="form-group">
+                    <label>Figure编号 *</label>
+                    <input type="text" id="figureNumber" placeholder="例如: Figure 1" required>
+                </div>
+                <div class="form-group">
+                    <label>Figure标题 *</label>
+                    <input type="text" id="figureTitle" placeholder="例如: 靶点验证与概念设计" required>
+                </div>
+                <div class="form-group">
+                    <label>Figure描述</label>
+                    <textarea id="figureDescription" placeholder="描述这个Figure的整体内容..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>画布尺寸</label>
+                    <div class="size-inputs">
+                        <input type="number" id="canvasWidth" value="800" placeholder="宽度" min="400" max="2000">
+                        <input type="number" id="canvasHeight" value="600" placeholder="高度" min="300" max="1500">
+                    </div>
+                </div>
+                <div class="form-group" id="templateGroup">
+                    <label>布局模板</label>
+                    <div class="template-selector">
+                        <div class="template-option" onclick="selectTemplate('1x1')">1×1</div>
+                        <div class="template-option" onclick="selectTemplate('1x2')">1×2</div>
+                        <div class="template-option" onclick="selectTemplate('2x2')">2×2</div>
+                        <div class="template-option" onclick="selectTemplate('2x3')">2×3</div>
+                        <div class="template-option selected" onclick="selectTemplate('custom')">自定义</div>
+                    </div>
+                    <input type="hidden" id="selectedTemplate" value="custom">
+                </div>
+                <div class="modal-footer">
+                    <div class="modal-footer-left">
+                        <button type="button" class="btn btn-danger" id="deleteFigureBtn" 
+                                onclick="deleteFigure()" style="display: none;">
+                            🗑️ 删除Figure
+                        </button>
+                    </div>
+                    <div class="modal-footer-right">
+                        <button type="button" class="btn btn-primary" onclick="closeFigureModal()">取消</button>
+                        <button type="submit" class="btn btn-success" id="figureSubmitBtn">创建Figure</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 智能排版预览模态框 -->
+    <div class="modal" id="layoutPreviewModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2 data-i18n="智能排版预览">智能排版预览</h2>
+                <button class="close-modal" onclick="closeLayoutPreview()">×</button>
+            </div>
+            <div id="layoutPreviewCanvas" style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; min-height: 400px; position: relative;">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn btn-primary" onclick="closeLayoutPreview()"><span data-i18n="取消">取消</span></button>
+                <button class="btn btn-success" onclick="applySmartLayout()"><span data-i18n="应用排版">应用排版</span></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化为空数组，不预设任何Figure
+        let figures = [];
+        let currentFigureId = null;
+        let selectedPanelId = null;
+        let selectedPanelIds = []; // 多选面板
+        let gridSize = 20;
+        let gridMode = false;
+        let zoomLevel = 1;
+        let isPresentationMode = false;
+
+        // 命名模式
+        let isLabelingMode = false;
+        let labelingSequence = [];
+
+        // 语言设置
+        let currentLanguage = 'zh'; // 'zh' or 'en'
+        let isDarkMode = false;
+
+        // 对齐辅助
+        let alignmentGuides = [];
+        const SNAP_THRESHOLD = 5; // 像素
+
+        // Resize预览
+        let resizePreview = null;
+
+        // 框选功能
+        let isSelecting = false;
+        let selectionStartX = 0;
+        let selectionStartY = 0;
+
+        // 格式刷
+        let isFormatPainterActive = false;
+        let copiedFormat = null;
+
+        // 智能排版
+        let layoutSuggestion = null;
+
+        // 拖拽状态 - 使用panelId而不是element引用
+        let isDragging = false;
+        let isResizing = false;
+        let draggedPanelId = null;
+        let resizeDirection = null;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let panelStartX = 0;
+        let panelStartY = 0;
+        let panelStartWidth = 0;
+        let panelStartHeight = 0;
+
+        // 展示模式平移
+        let isPanning = false;
+        let panStartX = 0;
+        let panStartY = 0;
+        let panOffsetX = 0;
+        let panOffsetY = 0;
+
+        function init() {
+            loadFromLocalStorage();
+            
+            // 加载黑夜模式设置
+            const savedDarkMode = localStorage.getItem('darkMode');
+            if (savedDarkMode === 'true') {
+                isDarkMode = true;
+                document.body.classList.add('dark-mode');
+                document.getElementById('darkModeToggle').textContent = '☀️';
+            }
+            
+            renderFiguresList();
+            updateStats();
+            setupEventListeners();
+        }
+
+        function snapToGrid(value) {
+            return Math.round(value / gridSize) * gridSize;
+        }
+
+        function drawGrid() {
+            const canvas = document.getElementById('gridCanvas');
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (!figure) return;
+
+            canvas.width = figure.canvasWidth;
+            canvas.height = figure.canvasHeight;
+            const ctx = canvas.getContext('2d');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (gridMode) {
+                ctx.strokeStyle = '#e0e0e0';
+                ctx.lineWidth = 1;
+
+                for (let x = 0; x <= figure.canvasWidth; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, figure.canvasHeight);
+                    ctx.stroke();
+                }
+
+                for (let y = 0; y <= figure.canvasHeight; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(figure.canvasWidth, y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function toggleShowGrid() {
+            gridMode = !gridMode;
+            const btn = document.getElementById('gridToggle');
+            btn.classList.toggle('active');
+            const btnText = gridMode ? '✅ 显示网格' : '📐 显示网格';
+            btn.querySelector('span').textContent = t(btnText);
+            drawGrid();
+        }
+
+        function updateGridSize(value) {
+            const newGridSize = parseInt(value);
+            
+            // 只更新显示和网格线，不立即调整面板
+            gridSize = newGridSize;
+            document.getElementById('gridSizeValue').textContent = gridSize + 'px';
+            document.getElementById('gridSizeDisplay').textContent = gridSize + 'px';
+            drawGrid();
+        }
+
+        function finalizeGridSize() {
+            // 在网格调整完成后，将面板对齐到最近的网格线
+            if (currentFigureId) {
+                const figure = figures.find(f => f.id === currentFigureId);
+                if (figure && figure.panels.length > 0) {
+                    figure.panels.forEach(panel => {
+                        // 找到最近的网格线位置
+                        panel.x = Math.round(panel.x / gridSize) * gridSize;
+                        panel.y = Math.round(panel.y / gridSize) * gridSize;
+                        
+                        // 尽量保持原始大小，只做最小调整
+                        const oldWidth = panel.width;
+                        const oldHeight = panel.height;
+                        
+                        // 如果当前尺寸已经接近网格的倍数，保持不变
+                        const widthRemainder = oldWidth % gridSize;
+                        const heightRemainder = oldHeight % gridSize;
+                        
+                        if (widthRemainder < gridSize / 2) {
+                            // 向下取整
+                            panel.width = Math.floor(oldWidth / gridSize) * gridSize;
+                        } else {
+                            // 向上取整
+                            panel.width = Math.ceil(oldWidth / gridSize) * gridSize;
+                        }
+                        
+                        if (heightRemainder < gridSize / 2) {
+                            panel.height = Math.floor(oldHeight / gridSize) * gridSize;
+                        } else {
+                            panel.height = Math.ceil(oldHeight / gridSize) * gridSize;
+                        }
+                        
+                        // 确保最小尺寸
+                        panel.width = Math.max(gridSize * 3, panel.width);
+                        panel.height = Math.max(gridSize * 3, panel.height);
+                    });
+                    saveToLocalStorage();
+                    renderCanvas();
+                    if (selectedPanelId) {
+                        renderPanelProperties();
+                    }
+                }
+            }
+        }
+
+        function createNewFigure() {
+            document.getElementById('figureModalTitle').textContent = '创建新Figure';
+            document.getElementById('editingFigureId').value = '';
+            document.getElementById('figureForm').reset();
+            const nextNumber = figures.length + 1;
+            document.getElementById('figureNumber').value = `Figure ${nextNumber}`;
+            document.getElementById('canvasWidth').value = 800;
+            document.getElementById('canvasHeight').value = 600;
+            document.getElementById('templateGroup').style.display = 'block';
+            document.getElementById('figureSubmitBtn').textContent = '创建Figure';
+            document.getElementById('deleteFigureBtn').style.display = 'none';
+            document.querySelectorAll('.template-option').forEach(opt => opt.classList.remove('selected'));
+            document.querySelectorAll('.template-option')[4].classList.add('selected');
+            document.getElementById('figureModal').classList.add('active');
+        }
+
+        function editFigure(figureId) {
+            const figure = figures.find(f => f.id === figureId);
+            if (!figure) return;
+
+            document.getElementById('figureModalTitle').textContent = '编辑Figure信息';
+            document.getElementById('editingFigureId').value = figureId;
+            document.getElementById('figureNumber').value = figure.number;
+            document.getElementById('figureTitle').value = figure.title;
+            document.getElementById('figureDescription').value = figure.description || '';
+            document.getElementById('canvasWidth').value = figure.canvasWidth;
+            document.getElementById('canvasHeight').value = figure.canvasHeight;
+            document.getElementById('templateGroup').style.display = 'none';
+            document.getElementById('figureSubmitBtn').textContent = '保存修改';
+            document.getElementById('deleteFigureBtn').style.display = 'inline-flex';
+            document.getElementById('figureModal').classList.add('active');
+        }
+
+        function deleteFigure() {
+            const editingId = document.getElementById('editingFigureId').value;
+            if (!editingId) return;
+
+            if (!confirm('确定要删除这个Figure及其所有面板吗？此操作不可恢复！')) return;
+
+            const figureId = parseInt(editingId);
+            figures = figures.filter(f => f.id !== figureId);
+            
+            if (currentFigureId === figureId) {
+                currentFigureId = figures[0]?.id || null;
+                selectedPanelId = null;
+            }
+
+            saveToLocalStorage();
+            renderFiguresList();
+            renderCanvas();
+            updateStats();
+            clearPanelProperties();
+            closeFigureModal();
+        }
+
+        function closeFigureModal() {
+            document.getElementById('figureModal').classList.remove('active');
+        }
+
+        function selectTemplate(template) {
+            document.querySelectorAll('.template-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+            document.getElementById('selectedTemplate').value = template;
+        }
+
+        document.getElementById('figureForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const editingId = document.getElementById('editingFigureId').value;
+            
+            if (editingId) {
+                const figure = figures.find(f => f.id === parseInt(editingId));
+                figure.number = document.getElementById('figureNumber').value;
+                figure.title = document.getElementById('figureTitle').value;
+                figure.description = document.getElementById('figureDescription').value;
+                
+                const newWidth = parseInt(document.getElementById('canvasWidth').value);
+                const newHeight = parseInt(document.getElementById('canvasHeight').value);
+                
+                if (newWidth !== figure.canvasWidth || newHeight !== figure.canvasHeight) {
+                    const scaleX = newWidth / figure.canvasWidth;
+                    const scaleY = newHeight / figure.canvasHeight;
+                    
+                    figure.panels.forEach(panel => {
+                        panel.x = Math.min(panel.x * scaleX, newWidth - panel.width);
+                        panel.y = Math.min(panel.y * scaleY, newHeight - panel.height);
+                    });
+                    
+                    figure.canvasWidth = newWidth;
+                    figure.canvasHeight = newHeight;
+                }
+                
+                saveToLocalStorage();
+                renderFiguresList();
+                renderCanvas();
+                updateStats();
+                closeFigureModal();
+            } else {
+                const figureData = {
+                    id: Date.now(),
+                    number: document.getElementById('figureNumber').value,
+                    title: document.getElementById('figureTitle').value,
+                    description: document.getElementById('figureDescription').value,
+                    canvasWidth: parseInt(document.getElementById('canvasWidth').value),
+                    canvasHeight: parseInt(document.getElementById('canvasHeight').value),
+                    template: document.getElementById('selectedTemplate').value,
+                    panels: []
+                };
+
+                createPanelsFromTemplate(figureData);
+                
+                figures.push(figureData);
+                currentFigureId = figureData.id;
+                
+                saveToLocalStorage();
+                renderFiguresList();
+                selectFigure(figureData.id);
+                updateStats();
+                closeFigureModal();
+            }
+        });
+
+        function createPanelsFromTemplate(figure) {
+            const templates = {
+                '1x1': { rows: 1, cols: 1 },
+                '1x2': { rows: 1, cols: 2 },
+                '2x2': { rows: 2, cols: 2 },
+                '2x3': { rows: 2, cols: 3 },
+                'custom': null
+            };
+
+            const template = templates[figure.template];
+            if (!template) return;
+
+            const spacing = gridSize;
+            const panelWidth = Math.floor((figure.canvasWidth - spacing * (template.cols + 1)) / template.cols);
+            const panelHeight = Math.floor((figure.canvasHeight - spacing * (template.rows + 1)) / template.rows);
+
+            let label = 65;
+            for (let row = 0; row < template.rows; row++) {
+                for (let col = 0; col < template.cols; col++) {
+                    figure.panels.push({
+                        id: Date.now() + label + Math.random(),
+                        label: String.fromCharCode(label),
+                        x: spacing + col * (panelWidth + spacing),
+                        y: spacing + row * (panelHeight + spacing),
+                        width: panelWidth,
+                        height: panelHeight,
+                        content: '',
+                        type: '',
+                        method: '',
+                        notes: '',
+                        color: 'rgb(32, 85, 138)',
+                        status: 'pending',
+                        image: null,
+                        gridMode: false,
+                        gridRows: 3,
+                        gridCols: 4,
+                        rowLabels: [],
+                        colLabels: [],
+                        showRowLabels: true,
+                        showColLabels: true
+                    });
+                    label++;
+                }
+            }
+        }
+
+        function renderFiguresList() {
+            const list = document.getElementById('figuresList');
+            
+            if (figures.length === 0) {
+                list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">暂无Figure<br><small style="font-size: 11px; margin-top: 5px; display: block;">点击上方"新建Figure"开始</small></div>';
+                return;
+            }
+
+            list.innerHTML = figures.map((fig, index) => `
+                <div class="figure-list-item ${currentFigureId === fig.id ? 'active' : ''}" 
+                     onclick="selectFigure(${fig.id})"
+                     draggable="true"
+                     data-figure-id="${fig.id}"
+                     data-figure-index="${index}">
+                    <div style="font-weight: bold; margin-bottom: 5px;">${fig.number}</div>
+                    <div style="font-size: 12px; opacity: 0.8;">${fig.title}</div>
+                    <div style="font-size: 11px; margin-top: 5px; opacity: 0.7;">
+                        ${fig.panels.length} 面板 | ${fig.canvasWidth}×${fig.canvasHeight}
+                    </div>
+                    <button class="figure-edit-btn" onclick="event.stopPropagation(); editFigure(${fig.id})">
+                        ✏️ 编辑
+                    </button>
+                </div>
+            `).join('');
+            
+            // 添加拖拽事件监听器
+            setupFigureDragAndDrop();
+        }
+
+        function setupFigureDragAndDrop() {
+            const figureItems = document.querySelectorAll('.figure-list-item');
+            let draggedElement = null;
+            let draggedIndex = null;
+
+            figureItems.forEach(item => {
+                item.addEventListener('dragstart', function(e) {
+                    draggedElement = this;
+                    draggedIndex = parseInt(this.dataset.figureIndex);
+                    this.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+
+                item.addEventListener('dragend', function(e) {
+                    this.classList.remove('dragging');
+                    document.querySelectorAll('.figure-list-item').forEach(el => {
+                        el.classList.remove('drag-over');
+                    });
+                });
+
+                item.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    if (draggedElement && draggedElement !== this) {
+                        this.classList.add('drag-over');
+                    }
+                });
+
+                item.addEventListener('dragleave', function(e) {
+                    this.classList.remove('drag-over');
+                });
+
+                item.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('drag-over');
+                    
+                    if (draggedElement && draggedElement !== this) {
+                        const targetIndex = parseInt(this.dataset.figureIndex);
+                        
+                        // 重新排序figures数组
+                        const [draggedFig] = figures.splice(draggedIndex, 1);
+                        figures.splice(targetIndex, 0, draggedFig);
+                        
+                        // 重新编号所有Figure
+                        reorderFigureNumbers();
+                        
+                        // 保存并重新渲染
+                        saveToLocalStorage();
+                        renderFiguresList();
+                        updateStats();
+                    }
+                });
+            });
+        }
+
+        function reorderFigureNumbers() {
+            figures.forEach((fig, index) => {
+                fig.number = `Figure ${index + 1}`;
+            });
+        }
+
+        function selectFigure(figureId) {
+            currentFigureId = figureId;
+            selectedPanelId = null;
+            selectedPanelIds = [];
+            
+            // 退出命名模式
+            if (isLabelingMode) {
+                exitLabelingMode();
+            }
+            
+            updateAlignToolsVisibility();
+            renderFiguresList();
+            renderCanvas();
+            updateStats();
+            clearPanelProperties();
+            drawGrid();
+        }
+
+        function renderCanvas() {
+            const canvas = document.getElementById('figureCanvas');
+            const figure = figures.find(f => f.id === currentFigureId);
+            
+            // 移除之前的命名模式类
+            canvas.classList.remove('labeling-mode');
+            
+            if (!figure) {
+                canvas.innerHTML = '<canvas class="grid-overlay" id="gridCanvas"></canvas><div class="drag-preview" id="dragPreview"></div><div class="loading">请创建或选择一个Figure</div>';
+                canvas.style.width = '800px';
+                canvas.style.height = '600px';
+                return;
+            }
+
+            canvas.style.width = figure.canvasWidth + 'px';
+            canvas.style.height = figure.canvasHeight + 'px';
+
+            // 添加命名模式类
+            if (isLabelingMode) {
+                canvas.classList.add('labeling-mode');
+            }
+
+            canvas.innerHTML = '<canvas class="grid-overlay" id="gridCanvas"></canvas><div class="drag-preview" id="dragPreview"></div><div class="selection-box" id="selectionBox"></div>';
+            
+            figure.panels.forEach(panel => {
+                const panelEl = createPanelElement(panel);
+                canvas.appendChild(panelEl);
+            });
+
+            drawGrid();
+        }
+
+        function createPanelElement(panel) {
+            const div = document.createElement('div');
+            div.className = 'panel-item ' + panel.status;
+            if (selectedPanelId === panel.id) {
+                div.classList.add('selected');
+            }
+            if (selectedPanelIds.includes(panel.id) && selectedPanelIds.length > 1) {
+                div.classList.add('multi-selected');
+            }
+            if (isLabelingMode && labelingSequence.includes(panel.id)) {
+                div.classList.add('labeled');
+            }
+            
+            div.style.left = panel.x + 'px';
+            div.style.top = panel.y + 'px';
+            div.style.width = panel.width + 'px';
+            div.style.height = panel.height + 'px';
+            div.setAttribute('data-panel-id', panel.id);
+
+            const statusColors = {
+                pending: '#e74c3c',
+                progress: '#f39c12',
+                complete: '#27ae60',
+                redo: '#9b59b6'
+            };
+            
+            // 设置边框颜色与状态一致
+            const borderColor = statusColors[panel.status] || panel.color;
+            div.style.borderColor = borderColor;
+
+            let bodyContent = '';
+            if (panel.gridMode) {
+                // 网格阵列模式
+                const rows = panel.gridRows || 3;
+                const cols = panel.gridCols || 4;
+                const rowLabels = panel.rowLabels || [];
+                const colLabels = panel.colLabels || [];
+                const showRowLabels = panel.showRowLabels !== false;
+                const showColLabels = panel.showColLabels !== false;
+                
+                bodyContent = `
+                    <div class="panel-grid-container">
+                        <table class="panel-grid-table">
+                            ${showColLabels ? `
+                            <thead>
+                                <tr>
+                                    ${showRowLabels ? '<th></th>' : ''}
+                                    ${Array.from({length: cols}, (_, i) => 
+                                        `<th>${colLabels[i] || 'Col ' + (i+1)}</th>`
+                                    ).join('')}
+                                </tr>
+                            </thead>
+                            ` : ''}
+                            <tbody>
+                                ${Array.from({length: rows}, (_, i) => `
+                                    <tr>
+                                        ${showRowLabels ? `<td class="grid-row-label">${rowLabels[i] || 'Row ' + (i+1)}</td>` : ''}
+                                        ${Array.from({length: cols}, () => 
+                                            '<td class="grid-cell"></td>'
+                                        ).join('')}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else if (panel.image) {
+                bodyContent = `
+                    <div class="panel-image-wrapper">
+                        <img src="${panel.image}" class="panel-image" alt="Panel image">
+                    </div>
+                    ${panel.content || panel.type ? `
+                        <div class="panel-description">
+                            ${panel.content || ''}
+                            ${panel.type ? `<div style="margin-top: 4px; font-weight: bold; color: rgb(32, 85, 138);">${panel.type}</div>` : ''}
+                        </div>
+                    ` : ''}
+                `;
+            } else {
+                bodyContent = `
+                    <div class="panel-content-full">
+                        ${panel.content || '<em style="color: #999;">点击右侧属性面板编辑内容</em>'}
+                        ${panel.type ? `<div style="margin-top: 8px; padding: 4px 8px; background: #e9ecef; border-radius: 4px; display: inline-block; font-size: 11px;">${panel.type}</div>` : ''}
+                    </div>
+                `;
+            }
+
+            div.innerHTML = `
+                <div class="panel-header" style="background: ${statusColors[panel.status] || panel.color};">${panel.label}</div>
+                <div class="panel-body">
+                    <div class="panel-presentation-label">${panel.label}</div>
+                    ${isLabelingMode && labelingSequence.includes(panel.id) ? `
+                        <div style="position: absolute; top: 5px; right: 5px; background: #28a745; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; z-index: 20;">
+                            ${labelingSequence.indexOf(panel.id) + 1}
+                        </div>
+                    ` : ''}
+                    ${bodyContent}
+                </div>
+                <div class="resize-handles">
+                    <div class="resize-handle n" data-direction="n"></div>
+                    <div class="resize-handle s" data-direction="s"></div>
+                    <div class="resize-handle w" data-direction="w"></div>
+                    <div class="resize-handle e" data-direction="e"></div>
+                    <div class="resize-handle nw" data-direction="nw"></div>
+                    <div class="resize-handle ne" data-direction="ne"></div>
+                    <div class="resize-handle sw" data-direction="sw"></div>
+                    <div class="resize-handle se" data-direction="se"></div>
+                </div>
+            `;
+
+            const header = div.querySelector('.panel-header');
+            header.addEventListener('mousedown', function(e) {
+                if (isLabelingMode) return; // 命名模式下禁用拖拽
+                
+                e.stopPropagation();
+                e.preventDefault();
+                startDrag(e, panel.id);
+            });
+
+            div.querySelectorAll('.resize-handle').forEach(handle => {
+                handle.addEventListener('mousedown', function(e) {
+                    if (isLabelingMode) return; // 命名模式下禁用调整大小
+                    
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const direction = this.getAttribute('data-direction');
+                    startResize(e, panel.id, direction);
+                });
+            });
+
+            div.addEventListener('click', function(e) {
+                if (!isDragging && !isResizing) {
+                    e.stopPropagation();
+                    
+                    // 格式刷模式：应用格式
+                    if (isFormatPainterActive) {
+                        applyFormat(panel.id);
+                        return;
+                    }
+                    
+                    // 命名模式：记录点击顺序
+                    if (isLabelingMode) {
+                        addToLabelingSequence(panel.id);
+                        return;
+                    }
+                    
+                    // 支持Ctrl/Cmd多选
+                    if (e.ctrlKey || e.metaKey) {
+                        togglePanelSelection(panel.id);
+                    } else {
+                        selectPanel(panel.id);
+                    }
+                }
+            });
+
+            // 双击打开关联文件夹
+            div.addEventListener('dblclick', function(e) {
+                e.stopPropagation();
+                if (panel.folderPath && !isPresentationMode && !isLabelingMode) {
+                    openFolderPath(panel.folderPath);
+                }
+            });
+
+            // 展示模式下的tooltip
+            div.addEventListener('mouseenter', function(e) {
+                if (isPresentationMode && panel.content) {
+                    showTooltip(e, panel);
+                }
+            });
+
+            div.addEventListener('mousemove', function(e) {
+                if (isPresentationMode && panel.content) {
+                    updateTooltipPosition(e);
+                }
+            });
+
+            div.addEventListener('mouseleave', function() {
+                if (isPresentationMode) {
+                    hideTooltip();
+                }
+            });
+
+            return div;
+        }
+
+        function findEmptyPosition(figure) {
+            const defaultWidth = snapToGrid(200);
+            const defaultHeight = snapToGrid(150);
+            const spacing = gridSize;
+
+            const occupied = figure.panels.map(p => ({
+                x1: p.x,
+                y1: p.y,
+                x2: p.x + p.width,
+                y2: p.y + p.height
+            }));
+
+            function isOverlapping(x, y, w, h) {
+                for (let rect of occupied) {
+                    if (!(x + w <= rect.x1 || x >= rect.x2 || y + h <= rect.y1 || y >= rect.y2)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            for (let y = spacing; y <= figure.canvasHeight - defaultHeight; y += spacing) {
+                for (let x = spacing; x <= figure.canvasWidth - defaultWidth; x += spacing) {
+                    if (!isOverlapping(x, y, defaultWidth, defaultHeight)) {
+                        return { x, y, width: defaultWidth, height: defaultHeight };
+                    }
+                }
+            }
+
+            const offset = (figure.panels.length % 5) * 20;
+            return { 
+                x: Math.min(spacing + offset, figure.canvasWidth - defaultWidth), 
+                y: Math.min(spacing + offset, figure.canvasHeight - defaultHeight),
+                width: defaultWidth, 
+                height: defaultHeight 
+            };
+        }
+
+        function updatePreview(x, y, width, height) {
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (!figure) return;
+            
+            // 应用对齐辅助
+            const snapped = checkAlignment(x, y, width, height);
+            x = snapped.x;
+            y = snapped.y;
+            
+            const preview = document.getElementById('dragPreview');
+            preview.style.left = x + 'px';
+            preview.style.top = y + 'px';
+            preview.style.width = width + 'px';
+            preview.style.height = height + 'px';
+            preview.classList.add('active');
+        }
+
+        function checkAlignment(x, y, width, height) {
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (!figure) return {x, y};
+            
+            // 清除旧的对齐线
+            clearAlignmentGuides();
+            
+            let snappedX = x;
+            let snappedY = y;
+            const guides = [];
+            
+            // 检查与其他面板的对齐
+            figure.panels.forEach(panel => {
+                if (panel.id === draggedPanelId) return;
+                
+                const panelRight = panel.x + panel.width;
+                const panelBottom = panel.y + panel.height;
+                const currentRight = x + width;
+                const currentBottom = y + height;
+                
+                // 左边对齐
+                if (Math.abs(x - panel.x) < SNAP_THRESHOLD) {
+                    snappedX = panel.x;
+                    guides.push({type: 'vertical', position: panel.x});
+                }
+                // 右边对齐
+                if (Math.abs(currentRight - panelRight) < SNAP_THRESHOLD) {
+                    snappedX = panelRight - width;
+                    guides.push({type: 'vertical', position: panelRight});
+                }
+                // 顶部对齐
+                if (Math.abs(y - panel.y) < SNAP_THRESHOLD) {
+                    snappedY = panel.y;
+                    guides.push({type: 'horizontal', position: panel.y});
+                }
+                // 底部对齐
+                if (Math.abs(currentBottom - panelBottom) < SNAP_THRESHOLD) {
+                    snappedY = panelBottom - height;
+                    guides.push({type: 'horizontal', position: panelBottom});
+                }
+                
+                // 中心对齐
+                const panelCenterX = panel.x + panel.width / 2;
+                const panelCenterY = panel.y + panel.height / 2;
+                const currentCenterX = x + width / 2;
+                const currentCenterY = y + height / 2;
+                
+                if (Math.abs(currentCenterX - panelCenterX) < SNAP_THRESHOLD) {
+                    snappedX = panelCenterX - width / 2;
+                    guides.push({type: 'vertical', position: panelCenterX});
+                }
+                if (Math.abs(currentCenterY - panelCenterY) < SNAP_THRESHOLD) {
+                    snappedY = panelCenterY - height / 2;
+                    guides.push({type: 'horizontal', position: panelCenterY});
+                }
+            });
+            
+            // 显示对齐线
+            showAlignmentGuides(guides);
+            
+            return {x: snappedX, y: snappedY};
+        }
+
+        function showAlignmentGuides(guides) {
+            const canvas = document.getElementById('figureCanvas');
+            
+            guides.forEach(guide => {
+                const line = document.createElement('div');
+                line.className = `alignment-guide ${guide.type}`;
+                
+                if (guide.type === 'vertical') {
+                    line.style.left = guide.position + 'px';
+                } else {
+                    line.style.top = guide.position + 'px';
+                }
+                
+                canvas.appendChild(line);
+            });
+        }
+
+        function clearAlignmentGuides() {
+            const canvas = document.getElementById('figureCanvas');
+            const guides = canvas.querySelectorAll('.alignment-guide');
+            guides.forEach(guide => guide.remove());
+        }
+
+        function hidePreview() {
+            const preview = document.getElementById('dragPreview');
+            if (preview) {
+                preview.classList.remove('active');
+            }
+            clearAlignmentGuides();
+        }
+
+        function startDrag(e, panelId) {
+            const figure = figures.find(f => f.id === currentFigureId);
+            const panel = figure.panels.find(p => p.id === panelId);
+            
+            isDragging = true;
+            draggedPanelId = panelId;
+            selectedPanelId = panelId;
+            
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            panelStartX = panel.x;
+            panelStartY = panel.y;
+
+            // 只添加样式，不重新渲染（会破坏DOM）
+            const panelEl = document.querySelector(`[data-panel-id="${panelId}"]`);
+            if (panelEl) {
+                panelEl.classList.add('dragging');
+                panelEl.classList.add('selected');
+            }
+        }
+
+        function startResize(e, panelId, direction) {
+            const figure = figures.find(f => f.id === currentFigureId);
+            const panel = figure.panels.find(p => p.id === panelId);
+            
+            isResizing = true;
+            draggedPanelId = panelId;
+            resizeDirection = direction;
+            selectedPanelId = panelId;
+            
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            panelStartX = panel.x;
+            panelStartY = panel.y;
+            panelStartWidth = panel.width;
+            panelStartHeight = panel.height;
+
+            // 只添加样式，不重新渲染（会破坏DOM）
+            const panelEl = document.querySelector(`[data-panel-id="${panelId}"]`);
+            if (panelEl) {
+                panelEl.classList.add('dragging');
+                panelEl.classList.add('selected');
+            }
+        }
+
+        function handleMouseMove(e) {
+            if (!isDragging && !isResizing && !isPanning) return;
+
+            if (isPanning) {
+                handlePan(e);
+                return;
+            }
+
+            const dx = e.clientX - dragStartX;
+            const dy = e.clientY - dragStartY;
+
+            if (isDragging) {
+                handleDrag(dx, dy);
+            } else if (isResizing) {
+                handleResize(dx, dy);
+            }
+        }
+
+        function handleDrag(dx, dy) {
+            const figure = figures.find(f => f.id === currentFigureId);
+            const panel = figure.panels.find(p => p.id === draggedPanelId);
+            
+            let newX = panelStartX + dx;
+            let newY = panelStartY + dy;
+
+            const maxX = figure.canvasWidth - panel.width;
+            const maxY = figure.canvasHeight - panel.height;
+            
+            newX = Math.max(0, Math.min(newX, maxX));
+            newY = Math.max(0, Math.min(newY, maxY));
+
+            updatePreview(newX, newY, panel.width, panel.height);
+        }
+
+        function handleResize(dx, dy) {
+            const figure = figures.find(f => f.id === currentFigureId);
+            const panel = figure.panels.find(p => p.id === draggedPanelId);
+            
+            let newX = panelStartX;
+            let newY = panelStartY;
+            let newWidth = panelStartWidth;
+            let newHeight = panelStartHeight;
+
+            switch (resizeDirection) {
+                case 'n':
+                    newY = panelStartY + dy;
+                    newHeight = panelStartHeight - dy;
+                    break;
+                case 's':
+                    newHeight = panelStartHeight + dy;
+                    break;
+                case 'w':
+                    newX = panelStartX + dx;
+                    newWidth = panelStartWidth - dx;
+                    break;
+                case 'e':
+                    newWidth = panelStartWidth + dx;
+                    break;
+                case 'nw':
+                    newX = panelStartX + dx;
+                    newY = panelStartY + dy;
+                    newWidth = panelStartWidth - dx;
+                    newHeight = panelStartHeight - dy;
+                    break;
+                case 'ne':
+                    newY = panelStartY + dy;
+                    newWidth = panelStartWidth + dx;
+                    newHeight = panelStartHeight - dy;
+                    break;
+                case 'sw':
+                    newX = panelStartX + dx;
+                    newWidth = panelStartWidth - dx;
+                    newHeight = panelStartHeight + dy;
+                    break;
+                case 'se':
+                    newWidth = panelStartWidth + dx;
+                    newHeight = panelStartHeight + dy;
+                    break;
+            }
+
+            newWidth = Math.max(gridSize * 3, newWidth);
+            newHeight = Math.max(gridSize * 3, newHeight);
+
+            if (newX < 0) {
+                newWidth += newX;
+                newX = 0;
+            }
+            if (newY < 0) {
+                newHeight += newY;
+                newY = 0;
+            }
+            if (newX + newWidth > figure.canvasWidth) {
+                newWidth = figure.canvasWidth - newX;
+            }
+            if (newY + newHeight > figure.canvasHeight) {
+                newHeight = figure.canvasHeight - newY;
+            }
+
+            updatePreview(newX, newY, newWidth, newHeight);
+        }
+
+        function handleMouseUp() {
+            if (isDragging || isResizing) {
+                const figure = figures.find(f => f.id === currentFigureId);
+                const panel = figure.panels.find(p => p.id === draggedPanelId);
+                
+                const preview = document.getElementById('dragPreview');
+                if (preview && preview.classList.contains('active')) {
+                    panel.x = snapToGrid(parseInt(preview.style.left) || panel.x);
+                    panel.y = snapToGrid(parseInt(preview.style.top) || panel.y);
+                    panel.width = snapToGrid(parseInt(preview.style.width) || panel.width);
+                    panel.height = snapToGrid(parseInt(preview.style.height) || panel.height);
+                }
+                
+                hidePreview();
+                saveToLocalStorage();
+                renderCanvas();
+                
+                if (selectedPanelId) {
+                    renderPanelProperties();
+                }
+            }
+
+            if (isPanning) {
+                const workspace = document.getElementById('workspace');
+                workspace.classList.remove('panning');
+            }
+
+            isDragging = false;
+            isResizing = false;
+            isPanning = false;
+            draggedPanelId = null;
+        }
+
+        function addPanel() {
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (!figure) {
+                alert('请先选择一个Figure！');
+                return;
+            }
+
+            const position = findEmptyPosition(figure);
+
+            const newPanel = {
+                id: Date.now() + Math.random(),
+                label: String.fromCharCode(65 + figure.panels.length),
+                x: position.x,
+                y: position.y,
+                width: position.width,
+                height: position.height,
+                content: '',
+                type: '',
+                method: '',
+                notes: '',
+                color: 'rgb(32, 85, 138)',
+                status: 'pending',
+                image: null,
+                gridMode: false,
+                gridRows: 3,
+                gridCols: 4,
+                rowLabels: [],
+                colLabels: [],
+                showRowLabels: true,
+                showColLabels: true
+            };
+
+            figure.panels.push(newPanel);
+            saveToLocalStorage();
+            renderCanvas();
+            selectPanel(newPanel.id);
+            updateStats();
+        }
+
+        function duplicatePanel() {
+            if (!selectedPanelId) {
+                alert('请先选择一个面板！');
+                return;
+            }
+
+            const figure = figures.find(f => f.id === currentFigureId);
+            const panel = figure.panels.find(p => p.id === selectedPanelId);
+            
+            const position = findEmptyPosition(figure);
+            
+            // 深拷贝面板，确保完全独立
+            const newPanel = JSON.parse(JSON.stringify(panel));
+            newPanel.id = Date.now() + Math.random();
+            newPanel.label = String.fromCharCode(65 + figure.panels.length);
+            newPanel.x = position.x;
+            newPanel.y = position.y;
+
+            figure.panels.push(newPanel);
+            saveToLocalStorage();
+            renderCanvas();
+            selectPanel(newPanel.id);
+            updateStats();
+        }
+
+        function selectPanel(panelId) {
+            selectedPanelId = panelId;
+            selectedPanelIds = [panelId];
+            updateAlignToolsVisibility();
+            renderCanvas();
+            renderPanelProperties();
+        }
+
+        // 格式刷功能
+        let formatPainterClickCount = 0;
+        let formatPainterClickTimer = null;
+        let isFormatPainterContinuous = false; // 是否连续模式
+
+        function toggleFormatPainter() {
+            if (!selectedPanelId) {
+                alert(t('请先选择一个面板！'));
+                return;
+            }
+
+            formatPainterClickCount++;
+            
+            if (formatPainterClickCount === 1) {
+                // 等待判断是否双击
+                formatPainterClickTimer = setTimeout(() => {
+                    // 单击：启用单次格式刷模式
+                    formatPainterClickCount = 0;
+                    isFormatPainterContinuous = false;
+                    activateFormatPainter();
+                }, 250);
+            } else if (formatPainterClickCount === 2) {
+                // 双击：启用连续格式刷模式
+                clearTimeout(formatPainterClickTimer);
+                formatPainterClickCount = 0;
+                isFormatPainterContinuous = true;
+                activateFormatPainter();
+            }
+        }
+
+        function activateFormatPainter() {
+            if (isFormatPainterActive) {
+                // 如果已经激活，则取消
+                exitFormatPainter();
+                return;
+            }
+
+            isFormatPainterActive = true;
+            const btn = document.getElementById('formatPainter');
+            
+            // 复制格式
+            const figure = figures.find(f => f.id === currentFigureId);
+            const panel = figure.panels.find(p => p.id === selectedPanelId);
+            copiedFormat = {
+                width: panel.width,
+                height: panel.height,
+                color: panel.color,
+                status: panel.status
+            };
+            btn.classList.add('format-painter-active');
+            document.body.style.cursor = 'copy';
+            
+            // 如果是连续模式，显示提示
+            if (isFormatPainterContinuous) {
+                showFormatPainterHint('连续格式刷模式已启用，按 Esc 退出');
+            } else {
+                showFormatPainterHint('格式刷已启用，点击目标面板应用');
+            }
+        }
+
+        function exitFormatPainter() {
+            isFormatPainterActive = false;
+            isFormatPainterContinuous = false;
+            copiedFormat = null;
+            document.getElementById('formatPainter').classList.remove('format-painter-active');
+            document.body.style.cursor = '';
+        }
+
+        function showFormatPainterHint(message) {
+            // 移除已有提示
+            const existingHint = document.querySelector('.format-painter-hint');
+            if (existingHint) existingHint.remove();
+            
+            const hint = document.createElement('div');
+            hint.className = 'format-painter-hint';
+            hint.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(40, 167, 69, 0.95);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                font-size: 14px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            `;
+            hint.textContent = message;
+            document.body.appendChild(hint);
+            
+            setTimeout(() => hint.remove(), 2000);
+        }
+
+        function applyFormat(targetPanelId) {
+            if (!copiedFormat) return;
+            
+            const figure = figures.find(f => f.id === currentFigureId);
+            const panel = figure.panels.find(p => p.id === targetPanelId);
+            
+            panel.width = copiedFormat.width;
+            panel.height = copiedFormat.height;
+            panel.color = copiedFormat.color;
+            panel.status = copiedFormat.status;
+            
+            saveToLocalStorage();
+            renderCanvas();
+            renderPanelProperties();
+            
+            // 如果不是连续模式，应用后自动退出
+            if (!isFormatPainterContinuous) {
+                exitFormatPainter();
+            }
+        }
+
+        // 框选功能
+        function startSelection(e) {
+            if (e.button !== 0) return; // 只响应左键
+            
+            // 检查是否点击在画布区域（而不是面板上）
+            const figureCanvas = document.getElementById('figureCanvas');
+            const target = e.target;
+            
+            // 如果点击在面板上，不启动框选
+            if (target.closest('.panel-item')) return;
+            
+            // 如果点击不在画布区域内，不启动框选
+            if (!figureCanvas.contains(target) && target !== figureCanvas) return;
+            
+            isSelecting = true;
+            const canvasRect = figureCanvas.getBoundingClientRect();
+            selectionStartX = (e.clientX - canvasRect.left) / zoomLevel;
+            selectionStartY = (e.clientY - canvasRect.top) / zoomLevel;
+            
+            const selectionBox = document.getElementById('selectionBox');
+            selectionBox.style.left = selectionStartX + 'px';
+            selectionBox.style.top = selectionStartY + 'px';
+            selectionBox.style.width = '0px';
+            selectionBox.style.height = '0px';
+            selectionBox.classList.add('active');
+            
+            e.preventDefault();
+        }
+
+        function updateSelection(e) {
+            if (!isSelecting) return;
+            
+            const canvasRect = document.getElementById('figureCanvas').getBoundingClientRect();
+            const currentX = (e.clientX - canvasRect.left) / zoomLevel;
+            const currentY = (e.clientY - canvasRect.top) / zoomLevel;
+            
+            const width = Math.abs(currentX - selectionStartX);
+            const height = Math.abs(currentY - selectionStartY);
+            const left = Math.min(currentX, selectionStartX);
+            const top = Math.min(currentY, selectionStartY);
+            
+            const selectionBox = document.getElementById('selectionBox');
+            selectionBox.style.left = left + 'px';
+            selectionBox.style.top = top + 'px';
+            selectionBox.style.width = width + 'px';
+            selectionBox.style.height = height + 'px';
+        }
+
+        function endSelection() {
+            if (!isSelecting) return;
+            
+            const selectionBox = document.getElementById('selectionBox');
+            const rect = {
+                left: parseFloat(selectionBox.style.left),
+                top: parseFloat(selectionBox.style.top),
+                width: parseFloat(selectionBox.style.width),
+                height: parseFloat(selectionBox.style.height)
+            };
+            
+            // 查找在选框内的面板
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (figure) {
+                selectedPanelIds = [];
+                figure.panels.forEach(panel => {
+                    const panelCenterX = panel.x + panel.width / 2;
+                    const panelCenterY = panel.y + panel.height / 2;
+                    
+                    if (panelCenterX >= rect.left && panelCenterX <= rect.left + rect.width &&
+                        panelCenterY >= rect.top && panelCenterY <= rect.top + rect.height) {
+                        selectedPanelIds.push(panel.id);
+                    }
+                });
+                
+                if (selectedPanelIds.length > 0) {
+                    selectedPanelId = selectedPanelIds[0];
+                    updateAlignToolsVisibility();
+                    renderCanvas();
+                    renderPanelProperties();
+                }
+            }
+            
+            selectionBox.classList.remove('active');
+            isSelecting = false;
+        }
+
+        // 智能排版功能
+        function smartLayout() {
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (!figure || figure.panels.length === 0) {
+                alert(t('当前Figure没有面板！'));
+                return;
+            }
+
+            // 按字母顺序排序面板
+            const sortedPanels = [...figure.panels].sort((a, b) => {
+                return a.label.localeCompare(b.label, undefined, {numeric: true, sensitivity: 'base'});
+            });
+
+            const padding = 20;
+            const canvasW = figure.canvasWidth;
+            const canvasH = figure.canvasHeight;
+            const availableW = canvasW - padding * 2;
+            const availableH = canvasH - padding * 2;
+
+            // 计算每个面板的相对大小比例
+            const totalArea = sortedPanels.reduce((sum, p) => sum + p.width * p.height, 0);
+            const avgArea = totalArea / sortedPanels.length;
+            
+            // 计算宽高比
+            const panelInfo = sortedPanels.map(p => ({
+                panel: p,
+                aspectRatio: p.width / p.height,
+                relativeWidth: p.width / (sortedPanels.reduce((max, pp) => Math.max(max, pp.width), 0)),
+                relativeHeight: p.height / (sortedPanels.reduce((max, pp) => Math.max(max, pp.height), 0)),
+                area: p.width * p.height,
+                isWide: p.width > p.height * 1.5,
+                isTall: p.height > p.width * 1.5,
+                isSquare: Math.abs(p.width - p.height) < Math.min(p.width, p.height) * 0.3
+            }));
+
+            // 智能分行策略
+            const rows = [];
+            let currentRow = [];
+            let currentRowWidth = 0;
+            let targetColsPerRow = Math.ceil(Math.sqrt(sortedPanels.length));
+
+            // 分析面板尺寸分布
+            const widths = sortedPanels.map(p => p.width).sort((a, b) => b - a);
+            const medianWidth = widths[Math.floor(widths.length / 2)];
+            const maxWidth = widths[0];
+            
+            // 判断面板是否为"宽面板"（占据多列）
+            const isWidePanel = (p) => p.width > medianWidth * 1.4;
+            
+            // 按照从左到右、从上到下的阅读顺序排列
+            panelInfo.forEach((info, idx) => {
+                const p = info.panel;
+                
+                // 如果是宽面板，独占一行或与下一个面板同行
+                if (isWidePanel(p)) {
+                    // 先保存当前行
+                    if (currentRow.length > 0) {
+                        rows.push([...currentRow]);
+                        currentRow = [];
+                    }
+                    
+                    // 检查下一个面板是否也是宽面板且两者宽度相近
+                    const nextInfo = panelInfo[idx + 1];
+                    if (nextInfo && isWidePanel(nextInfo.panel) && 
+                        Math.abs(p.width - nextInfo.panel.width) < medianWidth * 0.3) {
+                        // 两个宽面板放同一行
+                        currentRow.push(info);
+                    } else {
+                        // 宽面板独占一行
+                        rows.push([info]);
+                    }
+                } else {
+                    currentRow.push(info);
+                    
+                    // 判断是否需要换行
+                    const estimatedRowPanels = currentRow.length;
+                    if (estimatedRowPanels >= targetColsPerRow) {
+                        rows.push([...currentRow]);
+                        currentRow = [];
+                    }
+                }
+            });
+            
+            // 处理剩余的面板
+            if (currentRow.length > 0) {
+                rows.push(currentRow);
+            }
+
+            // 计算每行的最佳高度分配
+            const rowHeights = [];
+            let totalRelativeHeight = 0;
+            
+            rows.forEach(row => {
+                // 行高基于该行中最高面板的相对高度
+                const maxRelHeight = Math.max(...row.map(info => info.relativeHeight));
+                rowHeights.push(maxRelHeight);
+                totalRelativeHeight += maxRelHeight;
+            });
+
+            // 归一化行高
+            const effectiveHeight = availableH - (rows.length - 1) * padding;
+            const heightScale = effectiveHeight / totalRelativeHeight;
+            const normalizedRowHeights = rowHeights.map(h => Math.round(h * heightScale));
+
+            // 调整行高确保总高度正确
+            let heightSum = normalizedRowHeights.reduce((a, b) => a + b, 0);
+            let diff = effectiveHeight - heightSum;
+            if (diff !== 0 && normalizedRowHeights.length > 0) {
+                normalizedRowHeights[normalizedRowHeights.length - 1] += diff;
+            }
+
+            // 生成布局
+            layoutSuggestion = [];
+            let currentY = padding;
+
+            rows.forEach((row, rowIdx) => {
+                const rowHeight = normalizedRowHeights[rowIdx];
+                const panelsInRow = row.length;
+                
+                // 计算该行中面板的相对宽度
+                const totalRelWidth = row.reduce((sum, info) => sum + info.relativeWidth, 0);
+                const effectiveRowWidth = availableW - (panelsInRow - 1) * padding;
+                
+                let currentX = padding;
+                
+                row.forEach((info, colIdx) => {
+                    // 按相对宽度分配实际宽度
+                    let panelWidth;
+                    if (colIdx === panelsInRow - 1) {
+                        // 最后一个面板填满剩余空间
+                        panelWidth = availableW + padding - currentX;
+                    } else {
+                        panelWidth = Math.round((info.relativeWidth / totalRelWidth) * effectiveRowWidth);
+                    }
+                    
+                    layoutSuggestion.push({
+                        id: info.panel.id,
+                        label: info.panel.label,
+                        x: currentX,
+                        y: currentY,
+                        width: panelWidth,
+                        height: rowHeight
+                    });
+                    
+                    currentX += panelWidth + padding;
+                });
+                
+                currentY += rowHeight + padding;
+            });
+
+            // 显示预览
+            showLayoutPreview();
+        }
+
+        // 更高级的智能排版 - 保持原始尺寸比例
+        function smartLayoutAdvanced() {
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (!figure || figure.panels.length === 0) {
+                alert(t('当前Figure没有面板！'));
+                return;
+            }
+
+            // 按字母顺序排序
+            const sortedPanels = [...figure.panels].sort((a, b) => {
+                return a.label.localeCompare(b.label, undefined, {numeric: true, sensitivity: 'base'});
+            });
+
+            const padding = 20;
+            const canvasW = figure.canvasWidth;
+            const canvasH = figure.canvasHeight;
+
+            // 分析面板类型
+            const panelData = sortedPanels.map(p => ({
+                id: p.id,
+                label: p.label,
+                origWidth: p.width,
+                origHeight: p.height,
+                aspectRatio: p.width / p.height,
+                isWide: p.width > p.height * 1.3,
+                isTall: p.height > p.width * 1.3
+            }));
+
+            // 使用贪心算法进行行排列
+            const rows = [];
+            const maxRowWidth = canvasW - padding * 2;
+            let currentRow = [];
+            let currentRowScore = 0;
+
+            // 尝试将面板分组到行
+            panelData.forEach(pd => {
+                // 宽面板倾向于独占一行
+                if (pd.isWide && currentRow.length > 0) {
+                    rows.push([...currentRow]);
+                    currentRow = [pd];
+                } else if (pd.isWide && currentRow.length === 0) {
+                    currentRow = [pd];
+                    rows.push([...currentRow]);
+                    currentRow = [];
+                } else {
+                    currentRow.push(pd);
+                    // 如果当前行有3个以上面板，或者有2个且其中一个是高面板，换行
+                    if (currentRow.length >= 3 || 
+                        (currentRow.length >= 2 && currentRow.some(p => p.isTall))) {
+                        rows.push([...currentRow]);
+                        currentRow = [];
+                    }
+                }
+            });
+
+            if (currentRow.length > 0) {
+                rows.push(currentRow);
+            }
+
+            // 计算布局
+            const totalRows = rows.length;
+            const rowHeight = (canvasH - padding * (totalRows + 1)) / totalRows;
+
+            layoutSuggestion = [];
+            let y = padding;
+
+            rows.forEach(row => {
+                const colCount = row.length;
+                const colWidth = (maxRowWidth - padding * (colCount - 1)) / colCount;
+                let x = padding;
+
+                row.forEach(pd => {
+                    layoutSuggestion.push({
+                        id: pd.id,
+                        label: pd.label,
+                        x: Math.round(x),
+                        y: Math.round(y),
+                        width: Math.round(colWidth),
+                        height: Math.round(rowHeight)
+                    });
+                    x += colWidth + padding;
+                });
+
+                y += rowHeight + padding;
+            });
+
+            showLayoutPreview();
+        }
+
+        function showLayoutPreview() {
+            const modal = document.getElementById('layoutPreviewModal');
+            const canvas = document.getElementById('layoutPreviewCanvas');
+            const figure = figures.find(f => f.id === currentFigureId);
+            
+            // 创建预览
+            const scale = Math.min(800 / figure.canvasWidth, 500 / figure.canvasHeight);
+            canvas.style.width = (figure.canvasWidth * scale) + 'px';
+            canvas.style.height = (figure.canvasHeight * scale) + 'px';
+            canvas.style.margin = '20px auto';
+            
+            canvas.innerHTML = '';
+            layoutSuggestion.forEach(layout => {
+                const panelPreview = document.createElement('div');
+                panelPreview.style.cssText = `
+                    position: absolute;
+                    left: ${layout.x * scale}px;
+                    top: ${layout.y * scale}px;
+                    width: ${layout.width * scale}px;
+                    height: ${layout.height * scale}px;
+                    border: 2px solid rgb(32, 85, 138);
+                    background: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                    font-size: ${14 * scale}px;
+                    color: rgb(32, 85, 138);
+                    border-radius: 4px;
+                `;
+                panelPreview.textContent = layout.label;
+                canvas.appendChild(panelPreview);
+            });
+            
+            modal.classList.add('active');
+        }
+
+        function closeLayoutPreview() {
+            document.getElementById('layoutPreviewModal').classList.remove('active');
+            layoutSuggestion = null;
+        }
+
+        function applySmartLayout() {
+            if (!layoutSuggestion) return;
+            
+            const figure = figures.find(f => f.id === currentFigureId);
+            layoutSuggestion.forEach(layout => {
+                const panel = figure.panels.find(p => p.id === layout.id);
+                if (panel) {
+                    panel.x = layout.x;
+                    panel.y = layout.y;
+                    panel.width = layout.width;
+                    panel.height = layout.height;
+                }
+            });
+            
+            saveToLocalStorage();
+            renderCanvas();
+            closeLayoutPreview();
+        }
+
+        function togglePanelSelection(panelId) {
+            if (selectedPanelIds.includes(panelId)) {
+                selectedPanelIds = selectedPanelIds.filter(id => id !== panelId);
+            } else {
+                selectedPanelIds.push(panelId);
+            }
+            
+            if (selectedPanelIds.length > 0) {
+                selectedPanelId = selectedPanelIds[0];
+            } else {
+                selectedPanelId = null;
+            }
+            
+            updateAlignToolsVisibility();
+            renderCanvas();
+            
+            if (selectedPanelIds.length === 1) {
+                renderPanelProperties();
+            } else {
+                clearPanelProperties();
+            }
+        }
+
+        function updateAlignToolsVisibility() {
+            const alignTools = document.getElementById('alignTools');
+            if (alignTools) {
+                alignTools.style.display = selectedPanelIds.length > 1 ? 'inline-flex' : 'none';
+            }
+        }
+
+        function alignPanels(direction) {
+            if (selectedPanelIds.length < 2) return;
+            
+            const figure = figures.find(f => f.id === currentFigureId);
+            const panels = selectedPanelIds.map(id => figure.panels.find(p => p.id === id));
+            
+            switch(direction) {
+                case 'left':
+                    const minX = Math.min(...panels.map(p => p.x));
+                    panels.forEach(p => p.x = minX);
+                    break;
+                    
+                case 'right':
+                    const maxRight = Math.max(...panels.map(p => p.x + p.width));
+                    panels.forEach(p => p.x = maxRight - p.width);
+                    break;
+                    
+                case 'top':
+                    const minY = Math.min(...panels.map(p => p.y));
+                    panels.forEach(p => p.y = minY);
+                    break;
+                    
+                case 'bottom':
+                    const maxBottom = Math.max(...panels.map(p => p.y + p.height));
+                    panels.forEach(p => p.y = maxBottom - p.height);
+                    break;
+                    
+                case 'centerH':
+                    const avgCenterX = panels.reduce((sum, p) => sum + (p.x + p.width / 2), 0) / panels.length;
+                    panels.forEach(p => p.x = avgCenterX - p.width / 2);
+                    break;
+                    
+                case 'centerV':
+                    const avgCenterY = panels.reduce((sum, p) => sum + (p.y + p.height / 2), 0) / panels.length;
+                    panels.forEach(p => p.y = avgCenterY - p.height / 2);
+                    break;
+            }
+            
+            saveToLocalStorage();
+            renderCanvas();
+        }
+
+        function distributePanels(direction) {
+            if (selectedPanelIds.length < 3) {
+                alert('至少需要选择3个面板才能进行等距分布');
+                return;
+            }
+            
+            const figure = figures.find(f => f.id === currentFigureId);
+            const panels = selectedPanelIds.map(id => figure.panels.find(p => p.id === id));
+            
+            if (direction === 'horizontal') {
+                // 按x坐标排序
+                panels.sort((a, b) => a.x - b.x);
+                
+                const first = panels[0];
+                const last = panels[panels.length - 1];
+                const totalSpace = (last.x + last.width) - first.x;
+                const panelsWidth = panels.reduce((sum, p) => sum + p.width, 0);
+                const gap = (totalSpace - panelsWidth) / (panels.length - 1);
+                
+                let currentX = first.x + first.width;
+                for (let i = 1; i < panels.length - 1; i++) {
+                    currentX += gap;
+                    panels[i].x = currentX;
+                    currentX += panels[i].width;
+                }
+            } else {
+                // 按y坐标排序
+                panels.sort((a, b) => a.y - b.y);
+                
+                const first = panels[0];
+                const last = panels[panels.length - 1];
+                const totalSpace = (last.y + last.height) - first.y;
+                const panelsHeight = panels.reduce((sum, p) => sum + p.height, 0);
+                const gap = (totalSpace - panelsHeight) / (panels.length - 1);
+                
+                let currentY = first.y + first.height;
+                for (let i = 1; i < panels.length - 1; i++) {
+                    currentY += gap;
+                    panels[i].y = currentY;
+                    currentY += panels[i].height;
+                }
+            }
+            
+            saveToLocalStorage();
+            renderCanvas();
+        }
+
+        function showTooltip(e, panel) {
+            const tooltip = document.getElementById('panelTooltip');
+            if (tooltip && panel.content) {
+                tooltip.textContent = panel.content;
+                tooltip.classList.add('active');
+                updateTooltipPosition(e);
+            }
+        }
+
+        function updateTooltipPosition(e) {
+            const tooltip = document.getElementById('panelTooltip');
+            if (tooltip && tooltip.classList.contains('active')) {
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY + 15) + 'px';
+            }
+        }
+
+        function hideTooltip() {
+            const tooltip = document.getElementById('panelTooltip');
+            if (tooltip) {
+                tooltip.classList.remove('active');
+            }
+        }
+
+        function toggleLabelingMode() {
+            if (!currentFigureId) {
+                alert('请先选择一个Figure！');
+                return;
+            }
+            
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (!figure || figure.panels.length === 0) {
+                alert('当前Figure没有面板！');
+                return;
+            }
+
+            isLabelingMode = true;
+            labelingSequence = [];
+            
+            // 清空选择
+            selectedPanelId = null;
+            selectedPanelIds = [];
+            updateAlignToolsVisibility();
+            
+            // 更新UI
+            document.getElementById('labelingBtn').textContent = '⏸️ 命名中...';
+            document.getElementById('labelingBtn').classList.add('active');
+            document.getElementById('labelingDisplay').style.display = 'block';
+            updateLabelingDisplay();
+            
+            renderCanvas();
+        }
+
+        function addToLabelingSequence(panelId) {
+            // 如果已经点击过，忽略
+            if (labelingSequence.includes(panelId)) {
+                return;
+            }
+            
+            labelingSequence.push(panelId);
+            updateLabelingDisplay();
+            renderCanvas();
+        }
+
+        function updateLabelingDisplay() {
+            const display = document.getElementById('labelingSequence');
+            if (!display) return;
+            
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (!figure) return;
+            
+            // 显示已点击的顺序
+            const sequence = labelingSequence.map((id, index) => {
+                return String.fromCharCode(65 + index); // A, B, C...
+            }).join(' → ');
+            
+            display.textContent = sequence || '(开始点击面板)';
+            
+            // 如果已经点击了所有面板，自动完成
+            if (labelingSequence.length === figure.panels.length) {
+                setTimeout(() => {
+                    finishLabeling();
+                }, 500);
+            }
+        }
+
+        function finishLabeling() {
+            if (labelingSequence.length === 0) {
+                cancelLabeling();
+                return;
+            }
+            
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (!figure) return;
+            
+            // 重新命名面板，保留冒号后的内容
+            labelingSequence.forEach((panelId, index) => {
+                const panel = figure.panels.find(p => p.id === panelId);
+                if (panel) {
+                    const newLetter = String.fromCharCode(65 + index); // A, B, C...
+                    
+                    // 检查是否有冒号
+                    const colonIndex = panel.label.indexOf('：') !== -1 ? panel.label.indexOf('：') : panel.label.indexOf(':');
+                    
+                    if (colonIndex !== -1) {
+                        // 保留冒号及之后的内容
+                        const suffix = panel.label.substring(colonIndex);
+                        panel.label = newLetter + suffix;
+                    } else {
+                        // 没有冒号，直接替换
+                        panel.label = newLetter;
+                    }
+                }
+            });
+            
+            // 保存并退出命名模式
+            saveToLocalStorage();
+            exitLabelingMode();
+        }
+
+        function cancelLabeling() {
+            exitLabelingMode();
+        }
+
+        function exitLabelingMode() {
+            isLabelingMode = false;
+            labelingSequence = [];
+            
+            // 更新UI
+            document.getElementById('labelingBtn').textContent = '🔤 重新命名';
+            document.getElementById('labelingBtn').classList.remove('active');
+            document.getElementById('labelingDisplay').style.display = 'none';
+            
+            renderCanvas();
+        }
+
+        function movePanelsByKeyboard(key) {
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (!figure) return;
+            
+            const panels = selectedPanelIds.map(id => figure.panels.find(p => p.id === id));
+            
+            const step = gridMode ? gridSize : 1;
+            
+            panels.forEach(panel => {
+                switch(key) {
+                    case 'ArrowUp':
+                        panel.y = Math.max(0, panel.y - step);
+                        break;
+                    case 'ArrowDown':
+                        panel.y = Math.min(figure.canvasHeight - panel.height, panel.y + step);
+                        break;
+                    case 'ArrowLeft':
+                        panel.x = Math.max(0, panel.x - step);
+                        break;
+                    case 'ArrowRight':
+                        panel.x = Math.min(figure.canvasWidth - panel.width, panel.x + step);
+                        break;
+                }
+            });
+            
+            saveToLocalStorage();
+            renderCanvas();
+            
+            if (selectedPanelIds.length === 1) {
+                renderPanelProperties();
+            }
+        }
+
+        function showContact() {
+            const modal = document.createElement('div');
+            modal.className = 'contact-modal active';
+            
+            const title = currentLanguage === 'zh' ? '联系作者' : 'Contact Author';
+            const subtitle = currentLanguage === 'zh' ? '如有意见或建议，欢迎联系：' : 'For feedback or suggestions:';
+            const closeText = currentLanguage === 'zh' ? '关闭' : 'Close';
+            
+            modal.innerHTML = `
+                <div class="contact-content">
+                    <h3>${title}</h3>
+                    <p>${subtitle}</p>
+                    <div class="contact-email">📧 123456789@qq.com</div>
+                    <button class="contact-close" onclick="this.closest('.contact-modal').remove()">${closeText}</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'zh' ? 'en' : 'zh';
+            updateLanguage();
+        }
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode');
+            const icon = document.getElementById('darkModeToggle');
+            icon.textContent = isDarkMode ? '☀️' : '🌙';
+            
+            // 保存到localStorage
+            localStorage.setItem('darkMode', isDarkMode);
+            
+            // 提示用户
+            const message = isDarkMode ? 
+                (currentLanguage === 'zh' ? '已切换到黑夜模式' : 'Dark mode enabled') : 
+                (currentLanguage === 'zh' ? '已切换到日间模式' : 'Light mode enabled');
+            const hint = document.createElement('div');
+            hint.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 30px;
+                background: rgba(40, 167, 69, 0.95);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                font-size: 14px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            `;
+            hint.textContent = message;
+            document.body.appendChild(hint);
+            
+            setTimeout(() => {
+                hint.remove();
+            }, 2000);
+        }
+
+        const translations = {
+            zh: {
+                // Header
+                'SCI拼图': 'SCI拼图',
+                '切换语言 / Switch Language': '切换语言 / Switch Language',
+                '切换黑夜模式 / Toggle Dark Mode': '切换黑夜模式 / Toggle Dark Mode',
+                '联系作者 / Contact': '联系作者 / Contact',
+                
+                // Toolbar
+                '新建Figure': '新建Figure',
+                '添加面板': '添加面板',
+                '复制面板': '复制面板',
+                '格式刷': '格式刷',
+                '重新命名': '重新命名',
+                '显示网格': '显示网格',
+                '✅ 显示网格': '✅ 显示网格',
+                '📐 显示网格': '📐 显示网格',
+                '智能排版': '智能排版',
+                '展示模式': '展示模式',
+                '保存': '保存',
+                '加载': '加载',
+                '导出MD': '导出MD',
+                '导出SVG': '导出SVG',
+                
+                // Stats bar
+                'Figures:': 'Figures:',
+                '面板:': '面板:',
+                '当前:': '当前:',
+                '网格:': '网格:',
+                '缩放:': '缩放:',
+                '💡 Ctrl+滚轮缩放 | Shift+拖拽平移 | 方向键移动': '💡 Ctrl+滚轮缩放 | Shift+拖拽平移 | 方向键移动',
+                
+                // Figures list
+                '📁 Figures列表': '📁 Figures列表',
+                '暂无Figure': '暂无Figure',
+                '点击上方"新建Figure"开始': '点击上方"新建Figure"开始',
+                '编辑': '编辑',
+                
+                // Properties panel
+                '⚙️ 面板属性': '⚙️ 面板属性',
+                '网格大小': '网格大小',
+                '选择面板以编辑属性': '选择面板以编辑属性',
+                '面板标签': '面板标签',
+                '位置 (px)': '位置 (px)',
+                '尺寸 (px)': '尺寸 (px)',
+                '进度状态': '进度状态',
+                '未开始': '未开始',
+                '进行中': '进行中',
+                '已完成': '已完成',
+                '需重做': '需重做',
+                '自定义颜色': '自定义颜色',
+                '面板类型': '面板类型',
+                '面板内容': '面板内容',
+                '上传图片': '上传图片',
+                '网格阵列模式': '网格阵列模式',
+                '行数': '行数',
+                '列数': '列数',
+                '显示行标题': '显示行标题',
+                '显示列标题': '显示列标题',
+                '应用': '应用',
+                '取消': '取消',
+                '关联文件夹路径': '关联文件夹路径',
+                '内容描述': '内容描述',
+                '实验方法': '实验方法',
+                
+                // Modal
+                '创建新Figure': '创建新Figure',
+                '编辑Figure信息': '编辑Figure信息',
+                'Figure编号 *': 'Figure编号 *',
+                'Figure标题 *': 'Figure标题 *',
+                'Figure描述': 'Figure描述',
+                '画布尺寸': '画布尺寸',
+                '布局模板': '布局模板',
+                '自定义': '自定义',
+                '🗑️ 删除Figure': '🗑️ 删除Figure',
+                '创建Figure': '创建Figure',
+                '保存修改': '保存修改',
+                
+                // Smart Layout
+                '智能排版预览': '智能排版预览',
+                '应用排版': '应用排版',
+                
+                // Messages
+                '已切换到中文': '已切换到中文',
+                '请创建或选择一个Figure': '请创建或选择一个Figure',
+                '确定要删除这个Figure及其所有面板吗？此操作不可恢复！': '确定要删除这个Figure及其所有面板吗？此操作不可恢复！',
+                '请先选择一个面板！': '请先选择一个面板！',
+                '当前Figure没有面板！': '当前Figure没有面板！'
+            },
+            en: {
+                // Header
+                'SCI拼图': 'SCI Puzzle',
+                '切换语言 / Switch Language': 'Switch Language / 切换语言',
+                '切换黑夜模式 / Toggle Dark Mode': 'Toggle Dark Mode / 切换黑夜模式',
+                '联系作者 / Contact': 'Contact / 联系作者',
+                
+                // Toolbar
+                '新建Figure': 'New Figure',
+                '添加面板': 'Add Panel',
+                '复制面板': 'Duplicate Panel',
+                '格式刷': 'Format Painter',
+                '重新命名': 'Rename',
+                '显示网格': 'Show Grid',
+                '✅ 显示网格': '✅ Show Grid',
+                '📐 显示网格': '📐 Show Grid',
+                '智能排版': 'Smart Layout',
+                '展示模式': 'Presentation Mode',
+                '保存': 'Save',
+                '加载': 'Load',
+                '导出MD': 'Export MD',
+                '导出SVG': 'Export SVG',
+                
+                // Stats bar
+                'Figures:': 'Figures:',
+                '面板:': 'Panels:',
+                '当前:': 'Current:',
+                '网格:': 'Grid:',
+                '缩放:': 'Zoom:',
+                '💡 Ctrl+滚轮缩放 | Shift+拖拽平移 | 方向键移动': '💡 Ctrl+Wheel Zoom | Shift+Drag Pan | Arrow Keys Move',
+                
+                // Figures list
+                '📁 Figures列表': '📁 Figures List',
+                '暂无Figure': 'No Figures',
+                '点击上方"新建Figure"开始': 'Click "New Figure" to start',
+                '编辑': 'Edit',
+                
+                // Properties panel
+                '⚙️ 面板属性': '⚙️ Panel Properties',
+                '网格大小': 'Grid Size',
+                '选择面板以编辑属性': 'Select a panel to edit properties',
+                '面板标签': 'Panel Label',
+                '位置 (px)': 'Position (px)',
+                '尺寸 (px)': 'Size (px)',
+                '进度状态': 'Status',
+                '未开始': 'Pending',
+                '进行中': 'In Progress',
+                '已完成': 'Complete',
+                '需重做': 'Redo',
+                '自定义颜色': 'Custom Color',
+                '面板类型': 'Panel Type',
+                '面板内容': 'Panel Content',
+                '上传图片': 'Upload Image',
+                '网格阵列模式': 'Grid Array Mode',
+                '行数': 'Rows',
+                '列数': 'Columns',
+                '显示行标题': 'Show Row Labels',
+                '显示列标题': 'Show Column Labels',
+                '应用': 'Apply',
+                '取消': 'Cancel',
+                '关联文件夹路径': 'Associated Folder Path',
+                '内容描述': 'Content Description',
+                '实验方法': 'Experimental Method',
+                
+                // Modal
+                '创建新Figure': 'Create New Figure',
+                '编辑Figure信息': 'Edit Figure Info',
+                'Figure编号 *': 'Figure Number *',
+                'Figure标题 *': 'Figure Title *',
+                'Figure描述': 'Figure Description',
+                '画布尺寸': 'Canvas Size',
+                '布局模板': 'Layout Template',
+                '自定义': 'Custom',
+                '🗑️ 删除Figure': '🗑️ Delete Figure',
+                '创建Figure': 'Create Figure',
+                '保存修改': 'Save Changes',
+                
+                // Smart Layout
+                '智能排版预览': 'Smart Layout Preview',
+                '应用排版': 'Apply Layout',
+                
+                // Messages
+                '已切换到中文': 'Switched to English',
+                '请创建或选择一个Figure': 'Please create or select a Figure',
+                '确定要删除这个Figure及其所有面板吗？此操作不可恢复！': 'Are you sure you want to delete this Figure and all its panels? This cannot be undone!',
+                '请先选择一个面板！': 'Please select a panel first!',
+                '当前Figure没有面板！': 'Current Figure has no panels!'
+            }
+        };
+
+        function t(key) {
+            return translations[currentLanguage][key] || key;
+        }
+
+        function updateLanguage() {
+            // 更新页面标题
+            document.querySelector('.header h1').textContent = t('SCI拼图');
+            
+            // 更新所有按钮文本
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'number')) {
+                    el.placeholder = t(key);
+                } else {
+                    el.textContent = t(key);
+                }
+            });
+            
+            // 重新渲染列表和画布以更新翻译
+            renderFiguresList();
+            renderCanvas();
+            if (selectedPanelId) {
+                renderPanelProperties();
+            }
+            
+            // 提示用户
+            const message = currentLanguage === 'zh' ? '已切换到中文' : 'Switched to English';
+            const hint = document.createElement('div');
+            hint.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 30px;
+                background: rgba(40, 167, 69, 0.95);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                font-size: 14px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            `;
+            hint.textContent = message;
+            document.body.appendChild(hint);
+            
+            setTimeout(() => {
+                hint.remove();
+            }, 2000);
+        }
+
+        function renderPanelProperties() {
+            const figure = figures.find(f => f.id === currentFigureId);
+            const panel = figure.panels.find(p => p.id === selectedPanelId);
+            
+            if (!panel) return;
+
+            const props = document.getElementById('panelProperties');
+            props.innerHTML = `
+                <div class="form-group">
+                    <label>面板标签</label>
+                    <input type="text" value="${panel.label}" 
+                           onchange="updatePanelProperty('label', this.value)">
+                </div>
+
+                <div class="form-group">
+                    <label>位置 (px)</label>
+                    <div class="position-inputs">
+                        <input type="number" value="${panel.x}" step="1"
+                               onchange="updatePanelProperty('x', parseInt(this.value))">
+                        <input type="number" value="${panel.y}" step="1"
+                               onchange="updatePanelProperty('y', parseInt(this.value))">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>尺寸 (px)</label>
+                    <div class="size-inputs">
+                        <input type="number" value="${panel.width}" step="1" min="60"
+                               onchange="updatePanelProperty('width', parseInt(this.value))">
+                        <input type="number" value="${panel.height}" step="1" min="60"
+                               onchange="updatePanelProperty('height', parseInt(this.value))">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>进度状态</label>
+                    <div class="color-presets">
+                        <div class="color-preset pending ${panel.status === 'pending' ? 'selected' : ''}" 
+                             onclick="updatePanelStatus('pending')">
+                            未开始
+                        </div>
+                        <div class="color-preset progress ${panel.status === 'progress' ? 'selected' : ''}" 
+                             onclick="updatePanelStatus('progress')">
+                            进行中
+                        </div>
+                        <div class="color-preset complete ${panel.status === 'complete' ? 'selected' : ''}" 
+                             onclick="updatePanelStatus('complete')">
+                            已完成
+                        </div>
+                        <div class="color-preset redo ${panel.status === 'redo' ? 'selected' : ''}" 
+                             onclick="updatePanelStatus('redo')">
+                            需重做
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>自定义颜色</label>
+                    <input type="color" value="${panel.color || 'rgb(32, 85, 138)'}" 
+                           onchange="updatePanelProperty('color', this.value)"
+                           style="width: 100%; height: 40px; cursor: pointer;">
+                </div>
+
+                <div class="form-group">
+                    <label>面板类型</label>
+                    <select onchange="updatePanelProperty('type', this.value)">
+                        <option value="">选择类型</option>
+                        <option value="Western blot" ${panel.type === 'Western blot' ? 'selected' : ''}>Western blot</option>
+                        <option value="流式细胞术" ${panel.type === '流式细胞术' ? 'selected' : ''}>流式细胞术</option>
+                        <option value="免疫荧光" ${panel.type === '免疫荧光' ? 'selected' : ''}>免疫荧光</option>
+                        <option value="qPCR" ${panel.type === 'qPCR' ? 'selected' : ''}>qPCR</option>
+                        <option value="ELISA" ${panel.type === 'ELISA' ? 'selected' : ''}>ELISA</option>
+                        <option value="显微镜图像" ${panel.type === '显微镜图像' ? 'selected' : ''}>显微镜图像</option>
+                        <option value="统计图表" ${panel.type === '统计图表' ? 'selected' : ''}>统计图表</option>
+                        <option value="示意图" ${panel.type === '示意图' ? 'selected' : ''}>示意图</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>面板图片</label>
+                    <div class="image-upload-area ${panel.image ? 'has-image' : ''}" 
+                         onclick="document.getElementById('imageInput').click()">
+                        ${panel.image ? 
+                            `<img src="${panel.image}" class="image-preview">` : 
+                            '<div style="color: #999; font-size: 13px;">📷 点击上传图片</div>'}
+                    </div>
+                    <input type="file" id="imageInput" style="display: none;" 
+                           accept="image/*" onchange="handleImageUpload(event)">
+                    ${panel.image ? `
+                        <div class="image-actions">
+                            <button class="btn btn-primary btn-small" 
+                                    onclick="document.getElementById('imageInput').click()">
+                                更换图片
+                            </button>
+                            <button class="btn btn-primary btn-small" 
+                                    onclick="removeImage()">
+                                删除图片
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" ${panel.gridMode ? 'checked' : ''} 
+                               onchange="togglePanelGridMode(this.checked)" 
+                               style="width: auto; margin-right: 8px;">
+                        使用矩阵阵列模式（免疫荧光/流式）
+                    </label>
+                    
+                    ${panel.gridMode ? `
+                        <div class="grid-settings">
+                            <div class="grid-dimension-inputs">
+                                <div>
+                                    <label style="font-size: 11px; margin-bottom: 4px;">行数</label>
+                                    <input type="number" value="${panel.gridRows || 3}" min="1" max="10"
+                                           onchange="updateGridDimension('rows', parseInt(this.value))">
+                                </div>
+                                <div>
+                                    <label style="font-size: 11px; margin-bottom: 4px;">列数</label>
+                                    <input type="number" value="${panel.gridCols || 4}" min="1" max="10"
+                                           onchange="updateGridDimension('cols', parseInt(this.value))">
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 10px; display: flex; gap: 15px;">
+                                <label style="font-size: 12px;">
+                                    <input type="checkbox" ${panel.showColLabels !== false ? 'checked' : ''} 
+                                           onchange="updatePanelProperty('showColLabels', this.checked)"
+                                           style="width: auto; margin-right: 5px;">
+                                    显示列标签
+                                </label>
+                                <label style="font-size: 12px;">
+                                    <input type="checkbox" ${panel.showRowLabels !== false ? 'checked' : ''} 
+                                           onchange="updatePanelProperty('showRowLabels', this.checked)"
+                                           style="width: auto; margin-right: 5px;">
+                                    显示行标签
+                                </label>
+                            </div>
+                            
+                            <div style="margin-top: 15px;">
+                                <label style="font-size: 12px; font-weight: bold; margin-bottom: 8px; display: block;">
+                                    列标签 (横向)
+                                </label>
+                                <div class="label-inputs">
+                                    ${Array.from({length: panel.gridCols || 4}, (_, i) => `
+                                        <div class="label-input-item">
+                                            <span>列 ${i+1}:</span>
+                                            <input type="text" 
+                                                   value="${(panel.colLabels || [])[i] || ''}"
+                                                   placeholder="如: DAPI"
+                                                   onchange="updateGridLabel('col', ${i}, this.value)">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 15px;">
+                                <label style="font-size: 12px; font-weight: bold; margin-bottom: 8px; display: block;">
+                                    行标签 (纵向)
+                                </label>
+                                <div class="label-inputs">
+                                    ${Array.from({length: panel.gridRows || 3}, (_, i) => `
+                                        <div class="label-input-item">
+                                            <span>行 ${i+1}:</span>
+                                            <input type="text" 
+                                                   value="${(panel.rowLabels || [])[i] || ''}"
+                                                   placeholder="如: Free pCAR"
+                                                   onchange="updateGridLabel('row', ${i}, this.value)">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="form-group">
+                    <label>内容描述</label>
+                    <textarea onchange="updatePanelProperty('content', this.value)" 
+                              placeholder="此描述将显示在面板中...">${panel.content || ''}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>实验方法</label>
+                    <textarea onchange="updatePanelProperty('method', this.value)"
+                              placeholder="记录实验方法和步骤...">${panel.method || ''}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>📁 关联文件夹路径</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" value="${panel.folderPath || ''}" 
+                               placeholder="如: D:\\实验数据\\Figure1"
+                               onchange="updatePanelProperty('folderPath', this.value)"
+                               style="flex: 1;">
+                        <button class="btn btn-primary btn-small" 
+                                onclick="selectFolderPath()"
+                                title="选择文件夹">
+                            📂
+                        </button>
+                    </div>
+                    <small style="color: #999; font-size: 11px; margin-top: 4px; display: block;">
+                        双击面板可打开关联的文件夹
+                    </small>
+                    ${panel.folderPath ? `
+                        <button class="btn btn-info btn-small" style="margin-top: 8px;"
+                                onclick="openFolderPath('${panel.folderPath.replace(/\\/g, '\\\\')}')">
+                            🔗 打开文件夹
+                        </button>
+                    ` : ''}
+                </div>
+
+                <div class="quick-actions">
+                    <button class="btn btn-primary btn-small" onclick="duplicatePanel()">📋 复制</button>
+                    <button class="btn btn-primary btn-small" onclick="deletePanel()">🗑️ 删除</button>
+                </div>
+            `;
+        }
+
+        function updatePanelProperty(property, value) {
+            const figure = figures.find(f => f.id === currentFigureId);
+            const panel = figure.panels.find(p => p.id === selectedPanelId);
+            
+            panel[property] = value;
+            saveToLocalStorage();
+            renderCanvas();
+        }
+
+        function updatePanelStatus(status) {
+            const statusColors = {
+                pending: '#e74c3c',
+                progress: '#f39c12',
+                complete: '#27ae60',
+                redo: '#9b59b6'
+            };
+            
+            updatePanelProperty('status', status);
+            updatePanelProperty('color', statusColors[status]);
+            renderPanelProperties();
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                updatePanelProperty('image', e.target.result);
+                renderPanelProperties();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage() {
+            updatePanelProperty('image', null);
+            renderPanelProperties();
+        }
+
+        function selectFolderPath() {
+            // 浏览器无法直接选择文件夹，使用文件选择器让用户选择文件夹内的任意文件
+            // 然后提取其所在目录路径
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.webkitdirectory = true; // 允许选择文件夹
+            input.style.display = 'none';
+            
+            input.onchange = function(e) {
+                if (e.target.files && e.target.files.length > 0) {
+                    // 获取第一个文件的相对路径来提取文件夹名
+                    const firstFile = e.target.files[0];
+                    const relativePath = firstFile.webkitRelativePath;
+                    const folderName = relativePath.split('/')[0];
+                    
+                    // 提示用户手动输入完整路径
+                    const userPath = prompt(
+                        '浏览器安全限制无法获取完整本地路径。\n\n' +
+                        '您选择的文件夹名称是: ' + folderName + '\n\n' +
+                        '请输入此文件夹的完整本地路径:\n' +
+                        '(例如: D:\\实验数据\\' + folderName + ')',
+                        folderName
+                    );
+                    
+                    if (userPath) {
+                        updatePanelProperty('folderPath', userPath);
+                        renderPanelProperties();
+                    }
+                }
+            };
+            
+            document.body.appendChild(input);
+            input.click();
+            document.body.removeChild(input);
+        }
+
+        function openFolderPath(folderPath) {
+            if (!folderPath) return;
+            
+            // 尝试使用file://协议打开
+            // 注意：大多数浏览器出于安全原因会阻止这种操作
+            const normalizedPath = folderPath.replace(/\\/g, '/');
+            const fileUrl = 'file:///' + normalizedPath;
+            
+            // 显示提示并复制路径到剪贴板
+            const message = currentLanguage === 'zh' 
+                ? '由于浏览器安全限制，无法直接打开本地文件夹。\n\n文件夹路径已复制到剪贴板，请手动在文件管理器中打开。'
+                : 'Due to browser security restrictions, cannot open local folder directly.\n\nFolder path has been copied to clipboard, please open manually in file manager.';
+            
+            navigator.clipboard.writeText(folderPath).then(() => {
+                alert(message);
+            }).catch(() => {
+                // 如果复制失败，显示路径让用户手动复制
+                alert(message + '\n\n路径: ' + folderPath);
+            });
+        }
+
+        function togglePanelGridMode(enabled) {
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (!figure) return;
+            const panel = figure.panels.find(p => p.id === selectedPanelId);
+            if (!panel) return;
+            
+            panel.gridMode = enabled;
+            
+            // 初始化网格标签数组
+            if (enabled) {
+                if (!panel.rowLabels) panel.rowLabels = [];
+                if (!panel.colLabels) panel.colLabels = [];
+            }
+            
+            saveToLocalStorage();
+            renderCanvas();
+            renderPanelProperties();
+        }
+
+        function updateGridDimension(type, value) {
+            const figure = figures.find(f => f.id === currentFigureId);
+            const panel = figure.panels.find(p => p.id === selectedPanelId);
+            
+            if (type === 'rows') {
+                panel.gridRows = value;
+                // 调整rowLabels数组大小
+                if (!panel.rowLabels) panel.rowLabels = [];
+                while (panel.rowLabels.length < value) panel.rowLabels.push('');
+                if (panel.rowLabels.length > value) panel.rowLabels = panel.rowLabels.slice(0, value);
+            } else if (type === 'cols') {
+                panel.gridCols = value;
+                // 调整colLabels数组大小
+                if (!panel.colLabels) panel.colLabels = [];
+                while (panel.colLabels.length < value) panel.colLabels.push('');
+                if (panel.colLabels.length > value) panel.colLabels = panel.colLabels.slice(0, value);
+            }
+            
+            saveToLocalStorage();
+            renderCanvas();
+            renderPanelProperties();
+        }
+
+        function updateGridLabel(type, index, value) {
+            const figure = figures.find(f => f.id === currentFigureId);
+            const panel = figure.panels.find(p => p.id === selectedPanelId);
+            
+            if (type === 'row') {
+                if (!panel.rowLabels) panel.rowLabels = [];
+                panel.rowLabels[index] = value;
+            } else if (type === 'col') {
+                if (!panel.colLabels) panel.colLabels = [];
+                panel.colLabels[index] = value;
+            }
+            
+            saveToLocalStorage();
+            renderCanvas();
+        }
+
+        function deletePanel() {
+            if (!confirm('确定要删除这个面板吗？')) return;
+
+            const figure = figures.find(f => f.id === currentFigureId);
+            figure.panels = figure.panels.filter(p => p.id !== selectedPanelId);
+            
+            selectedPanelId = null;
+            saveToLocalStorage();
+            renderCanvas();
+            clearPanelProperties();
+            updateStats();
+        }
+
+        function clearPanelProperties() {
+            const props = document.getElementById('panelProperties');
+            props.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">选择面板以编辑属性</p>';
+        }
+
+        function zoomIn() {
+            zoomLevel = Math.min(zoomLevel * 1.2, 3);
+            applyZoom();
+        }
+
+        function zoomOut() {
+            zoomLevel = Math.max(zoomLevel / 1.2, 0.3);
+            applyZoom();
+        }
+
+        function resetZoom() {
+            zoomLevel = 1;
+            panOffsetX = 0;
+            panOffsetY = 0;
+            applyZoom();
+        }
+
+        function applyZoom() {
+            const container = document.getElementById('canvasContainer');
+            container.style.transform = `translate(${panOffsetX}px, ${panOffsetY}px) scale(${zoomLevel})`;
+            document.getElementById('zoomLevel').textContent = Math.round(zoomLevel * 100) + '%';
+            document.getElementById('zoomDisplay').textContent = Math.round(zoomLevel * 100) + '%';
+        }
+
+        function handlePan(e) {
+            const dx = e.clientX - panStartX;
+            const dy = e.clientY - panStartY;
+            
+            panOffsetX = dx;
+            panOffsetY = dy;
+            
+            applyZoom();
+        }
+
+        function enterPresentationMode() {
+            if (!currentFigureId) {
+                alert('请先选择一个Figure！');
+                return;
+            }
+            
+            // 退出命名模式
+            if (isLabelingMode) {
+                exitLabelingMode();
+            }
+            
+            isPresentationMode = true;
+            selectedPanelId = null;
+            selectedPanelIds = [];
+            updateAlignToolsVisibility();
+            document.getElementById('appContainer').classList.add('presentation-mode');
+            updatePresentationInfo();
+            updatePresentationNavButtons();
+            renderCanvas();
+            resetZoom();
+        }
+
+        function exitPresentationMode() {
+            isPresentationMode = false;
+            document.getElementById('appContainer').classList.remove('presentation-mode');
+            renderCanvas();
+            resetZoom();
+        }
+
+        function updatePresentationInfo() {
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (figure) {
+                document.getElementById('presentationTitle').textContent = figure.number;
+                document.getElementById('presentationSubtitle').textContent = figure.title;
+            }
+        }
+
+        function updatePresentationNavButtons() {
+            const currentIndex = figures.findIndex(f => f.id === currentFigureId);
+            const prevBtn = document.getElementById('prevFigureBtn');
+            const nextBtn = document.getElementById('nextFigureBtn');
+            
+            if (prevBtn) prevBtn.disabled = currentIndex <= 0;
+            if (nextBtn) nextBtn.disabled = currentIndex >= figures.length - 1;
+        }
+
+        function prevFigure() {
+            const currentIndex = figures.findIndex(f => f.id === currentFigureId);
+            if (currentIndex > 0) {
+                currentFigureId = figures[currentIndex - 1].id;
+                updatePresentationInfo();
+                updatePresentationNavButtons();
+                renderCanvas();
+                resetZoom();
+            }
+        }
+
+        function nextFigure() {
+            const currentIndex = figures.findIndex(f => f.id === currentFigureId);
+            if (currentIndex < figures.length - 1) {
+                currentFigureId = figures[currentIndex + 1].id;
+                updatePresentationInfo();
+                updatePresentationNavButtons();
+                renderCanvas();
+                resetZoom();
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('totalFigures').textContent = figures.length;
+            
+            let totalPanels = 0;
+            figures.forEach(f => totalPanels += f.panels.length);
+            document.getElementById('totalPanels').textContent = totalPanels;
+
+            const currentFigure = figures.find(f => f.id === currentFigureId);
+            document.getElementById('currentFigureName').textContent = 
+                currentFigure ? currentFigure.number : '-';
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('sciFiguresFinal', JSON.stringify(figures));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('sciFiguresFinal');
+            if (saved) {
+                try {
+                    figures = JSON.parse(saved);
+                } catch(e) {
+                    figures = [];
+                }
+            }
+        }
+
+        function saveProject() {
+            const data = {
+                version: '8.0',
+                figures: figures,
+                exportDate: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Figure_Plan_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        }
+
+        function loadProject() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileLoad(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    figures = data.figures || [];
+                    currentFigureId = figures[0]?.id || null;
+                    selectedPanelId = null;
+                    
+                    saveToLocalStorage();
+                    renderFiguresList();
+                    renderCanvas();
+                    updateStats();
+                    clearPanelProperties();
+                    
+                    alert('加载成功！');
+                } catch (error) {
+                    alert('文件格式错误！');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportToMarkdown() {
+            const statusNames = {
+                pending: '⏳ 未开始',
+                progress: '🔄 进行中',
+                complete: '✅ 已完成',
+                redo: '🔄 需重做'
+            };
+
+            let md = `# SCI论文Figure规划报告\n\n`;
+            md += `导出时间: ${new Date().toLocaleString()}\n\n---\n\n`;
+
+            figures.forEach(fig => {
+                md += `## ${fig.number}: ${fig.title}\n\n`;
+                md += `**画布**: ${fig.canvasWidth}×${fig.canvasHeight}px\n`;
+                md += `**面板数**: ${fig.panels.length}\n\n`;
+
+                if (fig.description) {
+                    md += `**描述**: ${fig.description}\n\n`;
+                }
+
+                if (fig.panels.length > 0) {
+                    md += `### 面板详情\n\n`;
+                    
+                    fig.panels.forEach(panel => {
+                        md += `#### 面板 ${panel.label} - ${statusNames[panel.status]}\n\n`;
+                        md += `- 位置: (${panel.x}, ${panel.y})\n`;
+                        md += `- 尺寸: ${panel.width}×${panel.height}px\n`;
+                        if (panel.type) md += `- 类型: ${panel.type}\n`;
+                        if (panel.content) md += `- 内容: ${panel.content}\n`;
+                        if (panel.method) md += `- 方法: ${panel.method}\n`;
+                        if (panel.image) md += `- 图片: 已上传\n`;
+                        md += `\n`;
+                    });
+                }
+
+                md += `---\n\n`;
+            });
+
+            const blob = new Blob([md], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Figure_Report_${new Date().toISOString().split('T')[0]}.md`;
+            a.click();
+        }
+
+        function exportToSVG() {
+            const figure = figures.find(f => f.id === currentFigureId);
+            if (!figure) {
+                alert('请先选择一个Figure！');
+                return;
+            }
+
+            const statusColors = {
+                pending: '#e74c3c',
+                progress: '#f39c12',
+                complete: '#27ae60',
+                redo: '#9b59b6'
+            };
+
+            let svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${figure.canvasWidth}" height="${figure.canvasHeight}" 
+     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    
+    <rect width="${figure.canvasWidth}" height="${figure.canvasHeight}" fill="white"/>
+    
+    <text x="10" y="20" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333">
+        ${figure.number}: ${figure.title}
+    </text>
+    
+`;
+
+            figure.panels.forEach(panel => {
+                const borderColor = statusColors[panel.status] || panel.color;
+                
+                svg += `    <g>
+        <rect x="${panel.x}" y="${panel.y}" width="${panel.width}" height="${panel.height}" 
+              fill="white" stroke="${borderColor}" stroke-width="2" rx="4"/>
+        
+        <text x="${panel.x + 8}" y="${panel.y + 20}" 
+              font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333">
+            ${panel.label}
+        </text>
+        
+`;
+
+                if (panel.gridMode) {
+                    // 渲染网格表格
+                    const rows = panel.gridRows || 3;
+                    const cols = panel.gridCols || 4;
+                    const rowLabels = panel.rowLabels || [];
+                    const colLabels = panel.colLabels || [];
+                    const showRowLabels = panel.showRowLabels !== false;
+                    const showColLabels = panel.showColLabels !== false;
+                    
+                    const tableX = panel.x + 10;
+                    const tableY = panel.y + 30;
+                    const tableWidth = panel.width - 20;
+                    const tableHeight = panel.height - 40;
+                    
+                    const actualCols = showRowLabels ? cols + 1 : cols;
+                    const actualRows = showColLabels ? rows + 1 : rows;
+                    const cellWidth = tableWidth / actualCols;
+                    const cellHeight = tableHeight / actualRows;
+                    
+                    let rowOffset = 0;
+                    let colOffset = 0;
+                    
+                    // 列标题
+                    if (showColLabels) {
+                        rowOffset = 1;
+                        for (let i = 0; i < cols; i++) {
+                            const x = tableX + (showRowLabels ? (i + 1) * cellWidth : i * cellWidth);
+                            svg += `        <rect x="${x}" y="${tableY}" width="${cellWidth}" height="${cellHeight}" 
+              fill="white" stroke="#dee2e6" stroke-width="1"/>
+        <text x="${x + cellWidth/2}" y="${tableY + cellHeight/2 + 4}" 
+              font-family="Arial, sans-serif" font-size="10" fill="#333" text-anchor="middle" font-weight="bold">
+            ${escapeXml(colLabels[i] || 'Col ' + (i+1))}
+        </text>
+`;
+                        }
+                    }
+                    
+                    // 行标题和单元格
+                    for (let i = 0; i < rows; i++) {
+                        const y = tableY + (i + rowOffset) * cellHeight;
+                        
+                        // 行标题
+                        if (showRowLabels) {
+                            colOffset = 1;
+                            svg += `        <rect x="${tableX}" y="${y}" width="${cellWidth}" height="${cellHeight}" 
+              fill="white" stroke="#dee2e6" stroke-width="1"/>
+        <text x="${tableX + cellWidth/2}" y="${y + cellHeight/2 + 4}" 
+              font-family="Arial, sans-serif" font-size="10" fill="#333" text-anchor="middle" font-weight="bold">
+            ${escapeXml(rowLabels[i] || 'Row ' + (i+1))}
+        </text>
+`;
+                        }
+                        
+                        // 单元格
+                        for (let j = 0; j < cols; j++) {
+                            const x = tableX + (j + colOffset) * cellWidth;
+                            svg += `        <rect x="${x}" y="${y}" width="${cellWidth}" height="${cellHeight}" 
+              fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
+`;
+                        }
+                    }
+                } else if (panel.image) {
+                    svg += `        <image x="${panel.x + 5}" y="${panel.y + 30}" width="${panel.width - 10}" height="${panel.height - 40}" 
+               xlink:href="${panel.image}" preserveAspectRatio="xMidYMid meet"/>
+`;
+                }
+
+                if (panel.content && !panel.gridMode) {
+                    const lines = panel.content.split('\n');
+                    const yStart = panel.image ? panel.y + panel.height - 30 : panel.y + 40;
+                    lines.forEach((line, i) => {
+                        if (i < 3) {
+                            svg += `        <text x="${panel.x + 10}" y="${yStart + i * 14}" 
+              font-family="Arial, sans-serif" font-size="11" fill="#666">
+            ${escapeXml(line.substring(0, 40))}${line.length > 40 ? '...' : ''}
+        </text>
+`;
+                        }
+                    });
+                }
+
+                svg += `    </g>
+    
+`;
+            });
+
+            svg += `</svg>`;
+
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${figure.number.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.svg`;
+            a.click();
+        }
+
+        function escapeXml(unsafe) {
+            return unsafe.replace(/[<>&'"]/g, function (c) {
+                switch (c) {
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    case '&': return '&amp;';
+                    case '\'': return '&apos;';
+                    case '"': return '&quot;';
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+
+            const workspace = document.getElementById('workspace');
+            
+            workspace.addEventListener('wheel', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    
+                    if (e.deltaY < 0) {
+                        zoomIn();
+                    } else {
+                        zoomOut();
+                    }
+                }
+            }, { passive: false });
+
+            workspace.addEventListener('mousedown', (e) => {
+                // 展示模式：左键拖拽画布
+                if (isPresentationMode) {
+                    if (e.target === workspace || e.target.classList.contains('figure-canvas')) {
+                        isPanning = true;
+                        panStartX = e.clientX - panOffsetX;
+                        panStartY = e.clientY - panOffsetY;
+                        workspace.classList.add('panning');
+                        e.preventDefault();
+                    }
+                }
+                // 普通模式：空格+左键 或 中键拖拽画布
+                else {
+                    if ((e.button === 1) || (e.button === 0 && e.shiftKey)) {
+                        if (e.target === workspace || e.target.classList.contains('figure-canvas') || e.target.classList.contains('grid-overlay')) {
+                            isPanning = true;
+                            panStartX = e.clientX - panOffsetX;
+                            panStartY = e.clientY - panOffsetY;
+                            workspace.classList.add('panning');
+                            e.preventDefault();
+                        }
+                    }
+                    // Ctrl+左键开始框选
+                    else if (e.button === 0 && e.ctrlKey) {
+                        startSelection(e);
+                    }
+                    // 点击空白处清空选择
+                    else if (e.button === 0) {
+                        if (e.target === workspace || e.target.classList.contains('figure-canvas') || e.target.classList.contains('grid-overlay')) {
+                            selectedPanelId = null;
+                            selectedPanelIds = [];
+                            updateAlignToolsVisibility();
+                            renderCanvas();
+                            clearPanelProperties();
+                        }
+                    }
+                }
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isSelecting) {
+                    updateSelection(e);
+                }
+            });
+
+            document.addEventListener('mouseup', (e) => {
+                if (isSelecting) {
+                    endSelection();
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (isFormatPainterActive) {
+                        exitFormatPainter();
+                    } else if (isLabelingMode) {
+                        cancelLabeling();
+                    } else if (isPresentationMode) {
+                        exitPresentationMode();
+                    }
+                }
+                if (e.key === 'Delete' && selectedPanelId && !isPresentationMode && !isLabelingMode) {
+                    deletePanel();
+                }
+                if (e.key === 'g' && e.ctrlKey && !isLabelingMode) {
+                    e.preventDefault();
+                    toggleShowGrid();
+                }
+                
+                // 展示模式下左右箭头切换Figure
+                if (isPresentationMode) {
+                    if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        prevFigure();
+                    } else if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        nextFigure();
+                    }
+                }
+                
+                // 方向键移动面板
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    if (selectedPanelIds.length > 0 && !isPresentationMode && !isLabelingMode) {
+                        e.preventDefault();
+                        movePanelsByKeyboard(e.key);
+                    }
+                }
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
