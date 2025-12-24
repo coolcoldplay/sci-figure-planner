@@ -1,7 +1,7 @@
 # 🔬 SCI Figure Planner / SCI论文图片排版规划工具
 
 <p align="center">
-  <img src="https://img.shields.io/badge/版本-4.0-blue.svg" alt="版本">
+  <img src="https://img.shields.io/badge/版本-5.0-blue.svg" alt="版本">
   <img src="https://img.shields.io/badge/语言-中文%20%7C%20English-green.svg" alt="语言">
   <img src="https://img.shields.io/badge/许可证-MIT-orange.svg" alt="许可证">
   <img src="https://img.shields.io/badge/平台-Web-purple.svg" alt="平台">
@@ -24,6 +24,7 @@
 - **智能对齐** - 自动吸附对齐辅助线，精确排版
 - **网格系统** - 可调节的网格系统，确保对齐整齐
 - **多种状态** - 未开始/进行中/已完成/需重做，直观追踪进度
+- **批量操作** - 多选面板后可批量删除
 
 ### 📐 智能排版
 - **一键排版** - 根据面板大小和字母顺序智能排列
@@ -43,24 +44,29 @@
 - **本地文件夹链接** - 为每个面板关联本地实验数据文件夹
 - **快速访问** - 双击面板快速打开关联文件夹
 
+### ↩️ 撤销功能
+- **Ctrl+Z撤销** - 支持多步撤销操作
+- **历史记录** - 保存最近50步操作
+
 ### 🌍 多语言支持
 - 中文 / English 一键切换
+- 完整的界面翻译
 
 ### 🌙 暗黑模式
 - 护眼的深色主题，适合长时间工作
 
 ### 💾 数据管理
 - **自动保存** - 数据自动保存到浏览器本地存储
-- **导入/导出** - JSON格式项目文件，方便备份和分享
-- **导出MD** - 导出Markdown格式的Figure报告
-- **导出SVG** - 导出矢量图格式
+- **导入/导出** - 支持JSON、MD、SVG、PNG、JPG、PDF多种格式
+- **一键清除** - 可清除所有本地数据重新开始
+- **大尺寸支持** - 画布最大支持4000×3000像素
 
 ---
 
 ## 🚀 快速开始
 
 ### 在线使用
-直接访问：[https://你的用户名.github.io/sci-figure-planner/](https://你的用户名.github.io/sci-figure-planner/)
+直接访问：[https://coolcoldplay.github.io/sci-figure-planner/](https://coolcoldplay.github.io/sci-figure-planner/)
 
 ### 本地使用
 1. 下载 `index.html` 文件
@@ -87,13 +93,14 @@
 
 | 快捷键 | 功能 |
 |--------|------|
+| `Ctrl + Z` | 撤销操作（支持多步） |
 | `Ctrl + 滚轮` | 缩放画布 |
 | `Shift + 拖拽` | 平移画布 |
 | `方向键` | 微调选中面板位置 |
 | `Ctrl + G` | 显示/隐藏网格 |
 | `Ctrl + 点击` | 多选面板 |
-| `Delete` | 删除选中面板 |
-| `Esc` | 退出当前模式（展示模式/命名模式/格式刷） |
+| `Delete` | 删除选中面板（支持批量） |
+| `Esc` | 退出当前模式（展示模式/排序模式/格式刷） |
 | `← →` | 展示模式下切换Figure |
 
 ### 面板属性
@@ -156,7 +163,7 @@ sci-figure-planner/
 
 如果你有任何建议或发现bug，欢迎：
 - 提交 [Issue](../../issues)
-- 发送邮件至：你的邮箱@example.com
+- 发送邮件至：1356496415@qq.com
 
 ---
 
@@ -168,6 +175,19 @@ sci-figure-planner/
 - ⭐ 给项目点个 Star
 - 📢 分享给你的同事和朋友
 - 💬 提出宝贵的改进建议
+
+---
+
+## 📸 截图预览
+
+### 主界面
+*（可以添加你的截图）*
+
+### 展示模式
+*（可以添加你的截图）*
+
+### 智能排版
+*（可以添加你的截图）*
 
 ---
 
